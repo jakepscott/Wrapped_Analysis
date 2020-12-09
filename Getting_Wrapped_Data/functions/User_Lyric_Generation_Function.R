@@ -50,8 +50,7 @@ Lyric_Generation_Function <- function(track_data){
     )
   }
   
-  missed <- Lyrics[1,]
-  missed <- Lyrics[-1,]
+  missed <- Lyrics %>% head(0)
   for (i in 1:nrow(Lyrics)) {
     print(i)
     if (!is.character(Lyrics$Lyrics[[i]])) {
