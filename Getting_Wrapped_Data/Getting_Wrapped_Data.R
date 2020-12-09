@@ -27,12 +27,11 @@ source("Getting_Wrapped_Data/functions/Playlist_Comparison_Function.R")
 #Get my playlists
 user_playlists <- getPlaylists("jakerocksalot",token = keys) %>% as_tibble() %>% filter(tracks>0) 
 
-#Get track info
+#Get track info for my wrapped playlists
 tracks <- Tracks_Function(user = "jakerocksalot",playlists=c("Your Top Songs 2017",
                                                              "Your Top Songs 2018",
                                                              "Your Top Songs 2019",
-                                                             "Your Top Songs 2020"))    #You need to get rid of the playlist column so that it doesn't try to join by that, and you need to do distinct because if a song
-#appears in 2+ playlists it will get added twice to each corresponding column in the lefthand side
+                                                             "Your Top Songs 2020"))    
 
 #Get Features
 Features <- Features_Function(track_data = tracks)
