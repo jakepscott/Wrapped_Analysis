@@ -10,13 +10,7 @@ library(sjmisc)
 
 # Loading Data ------------------------------------------------------------
 data_raw <- read_rds(here("Get_Top_200_Data/data/May5_to_Dec5_raw.rds")) %>% rename("Track_Name"=`Track Name`) #Data from May 5th to Dec 5th
-US_Data <- read_rds(here("Get_Top_200_Data/data/US_Data.rds")) #This is the US Data I already had from Jan 1st 2017 to May 4th 2020
-
-
-# Checking which songs I already have data for and which I need to get data for --------
-distinct_already <- US_Data %>% distinct(Track_Name) #Just getting the distinct songs, so I know which songs I already have data for
-distinct_new <- data_raw %>% distinct(Track_Name,.keep_all = T)
-need_data <- anti_join(distinct_new,distinct_already,by="Track_Name")
+need_data <- data_raw %>% distinct(URI,.keep_all = T) %>% select(-date,-Streams,-Position)
 
 
 #********************************************
@@ -117,14 +111,8 @@ Album_info <- Album_info %>% mutate(Days_Since_Release=as.numeric(Sys.Date()-alb
 #********************************************
 # Getting Artist Info -----------------------------------------------------
 #********************************************
-#First need to get the artist_id's, not including the featured artist
-distinct_artists <- track_info %>% 
-  separate(artists_id, c(into = "artist_id","to_drop"),sep = ";") %>% 
-  select(-to_drop) %>% 
-  separate(artists, c(into = "artist","to_drop"),sep = ";") %>% 
-  select(artist,artist_id)
 #Only doing it once for each artist  
-distinct_artists <- distinct_artists %>% distinct()
+distinct_artists <- track_info %>% dplyr::select(artist_id) %>% distinct(artist_id)
 
 #Get the first row, just to get the column names for artist info
 Artist_info <- as_tibble(getArtist("757aE44tKEUQEqRuT6GnEB",token = keys))
@@ -138,39 +126,43 @@ for(i in 1:nrow(distinct_artists)){#for each song
   }, error=function(e){})
 }
 
-Artist_info <- Artist_info %>% rename("artist_id"=id) %>% select(-popularity,-Track_Name)
+Artist_info <- Artist_info %>% rename("artist_id"=id) %>% select(-popularity,-name)
 
 #********************************************
 # Joining Data ------------------------------------------------------------
 #********************************************
-full_needed_data <- need_data %>% 
+#All features of each unique song from May to Dec 2020
+distinct_data <- need_data %>% 
   left_join(features,by="URI") %>% 
   left_join(track_info,by ="URI") %>% 
   left_join(Album_info,by="album_id") %>% 
   left_join(Artist_info)
 
+#Joining on full data of all songs each day from May to Dec
+May_to_Dec <- data_raw %>% left_join(distinct_data)
+
 
 #********************************************
 ##Last minute cleaning
 #********************************************
-full_needed_data <- full_needed_data %>% mutate(Streams=as.numeric(Streams))
-
-##Stupidly I split the genre column. Should not have done that. This rectifies that mistake
-full_needed_data <- full_needed_data %>% unite(col = "genre", genre1:genre15, sep="; ", remove = TRUE, na.rm = TRUE)
+May_to_Dec <- May_to_Dec %>% mutate(Streams=as.numeric(Streams))
 
 ##Making a dummy that says whether song is from an album or a single/other
-full_needed_data <- full_needed_data %>% mutate(album_dummy=if_else(album_type=="album",TRUE,FALSE)) 
+May_to_Dec <- May_to_Dec %>% mutate(album_dummy=if_else(album_type=="album",TRUE,FALSE)) 
 
 ##Making a time signature dummy that is 1 if time signature is 4 zero otherwise
-full_needed_data <- full_needed_data %>% mutate(time_signature_dummy=if_else(time_signature==4,1,0)) 
+May_to_Dec <- May_to_Dec %>% mutate(time_signature_dummy=if_else(time_signature==4,1,0)) 
 
+#making date a date column
+May_to_Dec <- May_to_Dec %>% mutate(date=as.Date(date))
 
-
+#Make position numeric
+May_to_Dec <- May_to_Dec %>% mutate(Position=as.numeric(Position))
 #********************************************
 ##Making Genre Variables
 #********************************************
 ##Making the columns themselves: This creates a true false column for every genre
-full_needed_data <- full_needed_data %>% mutate(hip_hop=str_detect(genres,"hip|hop"),
+May_to_Dec <- May_to_Dec %>% mutate(hip_hop=str_detect(genres,"hip|hop"),
                                                 pop = str_detect(genres,("pop")),
                                                 rap=str_detect(genres,("rap")),
                                                 trap = str_detect(genres,"trap"),
@@ -186,7 +178,20 @@ full_needed_data <- full_needed_data %>% mutate(hip_hop=str_detect(genres,"hip|h
                                                 other_genre=ifelse(other_genre==T,F,T))
 
 
+
 #********************************************
 ####Saving Data
 #********************************************
-saveRDS(full_needed_data, file = "Get_Top_200_Data/data/full_needed_data.rds")
+saveRDS(May_to_Dec, file = "Get_Top_200_Data/data/May_to_Dec_Full.rds")
+
+#********************************************
+####Appending May to Dec 2020 with Jan 2017 to May 2020
+#********************************************
+Jan_to_May <- read_rds(here("Get_Top_200_Data/data/US_Data.rds")) %>% rename("date"=Date)
+May_to_Dec <- May_to_Dec %>% select(-genres)
+
+Jan_to_May <- Jan_to_May %>% select(names(May_to_Dec))
+
+Jan_2017_Dec_2020 <- bind_rows(Jan_to_May,May_to_Dec)
+
+saveRDS(Jan_2017_Dec_2020,here("Get_Top_200_Data/data/Jan_2017_Dec_2020.rds"))
