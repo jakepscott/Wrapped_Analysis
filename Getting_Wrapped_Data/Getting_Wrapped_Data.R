@@ -1,3 +1,29 @@
+
+# Loading Libs ------------------------------------------------------------
+library(shiny)
+library(shinydashboard)
+library(shinyalert)
+library(shinyjs)
+library(shinyWidgets)
+library(DT)
+library(shinycssloaders)
+library(stringr)
+library(Rspotify)
+library(tidyverse)
+library(shinybusy)
+
+
+# Loading Necessary Data and Functions ------------------------------------
+load(here("Getting_Wrapped_Data/functions/keys"))
+source(here("Getting_Wrapped_Data/functions/User_Tracks_Function.R"))
+source(here("Getting_Wrapped_Data/functions/User_Features_Function.R"))
+source(here("Getting_Wrapped_Data/functions/User_Lyric_Analysis_Function.R"))
+source(here("Getting_Wrapped_Data/functions/User_Lyric_Generation_Function.R"))
+source(here("Getting_Wrapped_Data/functions/Overview_Figure_Function.R"))
+source("Getting_Wrapped_Data/functions/Playlist_Comparison_Function.R")
+
+
+
 #Get my playlists
 user_playlists <- getPlaylists("jakerocksalot",token = keys) %>% as_tibble() %>% filter(tracks>0) 
 
