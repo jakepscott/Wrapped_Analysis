@@ -9,11 +9,15 @@ for (i in 1:nrow(Lyrics)) {
   }
 }
 
+
+# Getting Some of the tough songs ------------------------------------------
+
+
 #These are the tough songs that my function couldn't get
 tough_songs <- missed %>% filter(!is.na(Song)) #Keep just the rows I missed (i.e where there are NA's for the lyrics, which I did above)
 #A handful of songs are messed up by parentheses. Let's get rid of those
 tough_songs <- tough_songs %>% mutate(song2=str_replace(Song,"\\(",replacement = ""),
-                          test=str_replace(song2,"\\)",replacement = ""))
+                          song2=str_replace(song2,"\\)",replacement = ""))
 #Get the lyrics if I remove those parenthesis, works for a few
 for (i in 1:nrow(tough_songs)) {
   tryCatch({
@@ -26,26 +30,32 @@ for (i in 1:nrow(tough_songs)) {
   )
 }
 
-#Getting the songs I *still* missed
-missed <- test %>% head(0)
-for (i in 1:nrow(test)) {
+
+# Getting the Songs I *Still* missed --------------------------------------
+
+missed <- tough_songs %>% head(0)
+for (i in 1:nrow(tough_songs)) {
   print(i)
-  if (!is.character(test$Lyrics[[i]])) {
-    missed[i,] <- test[i,]
+  if (!is.character(tough_songs$Lyrics[[i]])) {
+    missed[i,] <- tough_songs[i,]
   }   else {
     missed[i,] <- NA
   }
 }
+#Saving which ones I got
+captured_tough_songs <- tough_songs %>% anti_join(missed)
 
 #Going to have to get these ones manually
 manual_lyrics <- missed %>% filter(!is.na(Song))
+
+
+# Getting Songs Manually --------------------------------------------------
 
 #Just getting the songs manually. Bummer. But only 20ish out of 400, not bad. 
 manual_lyrics$Lyrics[which(manual_lyrics$Song=="Electric Love")] <- get_lyrics_url("https://genius.com/Brns-electric-love-lyrics") %>% select(line)
 manual_lyrics$Lyrics[which(manual_lyrics$Song=="10,000 Emerald Pools")] <- get_lyrics_url("https://genius.com/Brns-10000-emerald-pools-lyrics") %>% select(line)
 #manual_lyrics$Lyrics[which(manual_lyrics$Song=="Hold on to Her (feat. Dom Kennedy)")] <- get_lyrics_url("") %>% select(line)
 manual_lyrics$Lyrics[which(manual_lyrics$Song=="Rap Saved Me" )] <- get_lyrics_url("https://genius.com/21-savage-offset-and-metro-boomin-rap-saved-me-lyrics") %>% select(line)
-manual_lyrics$Lyrics[which(manual_lyrics$Song=="715 - CR∑∑KS")] <- get_lyrics_url("") %>% select(line)
 manual_lyrics$Lyrics[which(manual_lyrics$Song=="Buy U a Drank (Shawty Snappin') (feat. Yung Joc)")] <- get_lyrics_url("https://genius.com/T-pain-buy-u-a-drank-shawty-snappin-feat-yung-joc-acappella-lyrics") %>% select(line)
 manual_lyrics$Lyrics[which(manual_lyrics$Song== "Pray For Me (with Kendrick Lamar)")] <- get_lyrics_url("https://genius.com/The-weeknd-and-kendrick-lamar-pray-for-me-lyrics") %>% select(line)
 manual_lyrics$Lyrics[which(manual_lyrics$Song=="Song For You")] <- get_lyrics_url("https://genius.com/Donny-hathaway-a-song-for-you-lyrics") %>% select(line)
@@ -93,3 +103,14 @@ Turn around now, you're my A-Team
 God damn, turn around now, you're my A-Team"
 
 manual_lyrics$Lyrics[which(manual_lyrics$Song=="10 d E A T h b R E a s T ⚄ ⚄" )] <- get_lyrics_url("https://genius.com/Bon-iver-10-d-e-a-t-h-b-r-e-a-s-t-lyrics") %>% select(line)
+
+
+# Joining all the lyrical data  -------------------------------------------
+#Songs I got in the above process
+retrieved <- bind_rows(captured_tough_songs,manual_lyrics) %>% select(-song2)
+
+#Dropping from my lyrics object the rows for the songs I just got (which are NA's in the Lyrics object for the lyrics column right now)
+Got_Lyrics <- Lyrics %>% anti_join(retrieved)
+
+#Binding the lyrics I just got onto the lyrics on got from my function 
+Full_Lyrics <- bind_rows(Got_Lyrics,retrieved)
