@@ -111,8 +111,11 @@ Playlist_Comparison_Function <- function(data,wrapped=0) {
       group_by(Playlist) %>% 
       summarise(across(where(is.logical),list(percent=mean_100))) %>% 
       rename_if(str_detect(names(.),"_percent"), ~paste("Percent",.,sep=" "))
+      
     
     colnames(Genres) <- Genres %>% colnames() %>% str_remove("_percent")
+    Genres <- Genres %>% rename("Percent Hip Hop" = `Percent \`Hip Hop\``,
+                                "Percent R&B" = `Percent \`R&B\``)
     
     Playlist_Data <- left_join(Playlist_Data,Genres)
   }
