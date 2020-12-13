@@ -11,6 +11,7 @@ library(stringr)
 library(Rspotify)
 library(tidyverse)
 library(shinybusy)
+library(here)
 
 
 # Loading Necessary Data and Functions ------------------------------------
@@ -35,13 +36,21 @@ tracks <- Tracks_Function(user = "jakerocksalot",playlists=c("Your Top Songs 201
 
 #Get Features
 Features <- Features_Function(track_data = tracks)
-#Get lyrics
+#Get lyrics using function
 Lyrics <- Lyric_Generation_Function(tracks)
+
+#Get rest of lyrics more manually
+source(here("Getting_Wrapped_Data/Getting_Some_Lyrics_Manually.R"))
+#Note: this creates Full_Lyrics object
+#Then I can left_join() on the full data after I do the Lyrics analysis
+#saveRDS(Full_Lyrics,here("data/Full_Lyrics.rds"))
+
 #Getting features of the lyrics
-Lyric_Features <- Lyric_Analysis_Function(Lyrics) %>% select(-Lyrics)
+Lyric_Features <- Lyric_Analysis_Function(Full_Lyrics) %>% select(-Lyrics)
 
 #Joining
-Full_Data <- left_join(left_join(tracks,Features),Lyric_Features)
+Full_Data <- left_join(left_join(tracks,Features),Lyric_Features) %>% distinct()
+#saveRDS(Full_Data,here("data/Full_Data.rds"))
 
 #Playlist analysis
 Full_Data %>% 
