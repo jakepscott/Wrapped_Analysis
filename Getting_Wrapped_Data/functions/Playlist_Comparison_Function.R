@@ -1,4 +1,7 @@
-Playlist_Comparison_Function <- function(data) {
+library(tidyverse)
+library(readr)
+library(lubridate)
+Playlist_Comparison_Function <- function(data,wrapped=0) {
   #Getting something to combine all the feature summaries to
   Playlist_Data <- data %>% group_by(Playlist) %>% summarise(`Number of Songs`=n())
   
@@ -49,15 +52,23 @@ Playlist_Comparison_Function <- function(data) {
   
   if("Years Since Release" %in% colnames(data)){
     #IF Years Since Release is in colnames, I must have gotten it, so summarise
-    #Continuous
-    Release_Dates <- data %>% 
-      select(Playlist,`Years Since Release`) %>% 
-      group_by(Playlist) %>%  
-      summarise(`Median Years Since Release`=median(`Years Since Release`,na.rm = T))
-    
-    #
-    
-    Playlist_Data <- left_join(Playlist_Data,Release_Dates)
+
+# This if else is only for wrapped analysis -------------------------------
+    if (wrapped==1) {
+      Release_Dates <- data %>% 
+        select(Playlist,`Years Since Release`) %>% 
+        mutate(release_date=Sys.Date()-365*`Years Since Release`,
+               years_since_release=parse_number(Playlist)-year(release_date)) %>% 
+        group_by(Playlist) %>% 
+        summarise(`Median Years Since Release (Adj)`=median(years_since_release,na.rm = T))
+    } else {
+      Release_Dates <- data %>% 
+        select(Playlist,`Years Since Release`) %>% 
+        group_by(Playlist) %>%  
+        summarise(`Median Years Since Release`=median(`Years Since Release`,na.rm = T))
+      
+    }
+   Playlist_Data <- left_join(Playlist_Data,Release_Dates)
   }
   
   #Genres
