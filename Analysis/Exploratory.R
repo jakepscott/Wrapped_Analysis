@@ -4,12 +4,13 @@ library(tidyverse)
 library(tidytext)
 library(ggridges)
 library(lexicon)
+library(patchwork)
 library(here)
 source(here("Getting_Wrapped_Data/functions/Playlist_Comparison_Function.R"))
 
 data <- read_rds(here("data/Full_Data.rds"))
 
-# Exploratory Analysis ----------------------------------------------------
+# Distributions----------------------------------------------------
 data %>% 
   ggplot(aes(x=Danceability, y=Playlist,fill=Playlist)) +
   stat_density_ridges(quantile_lines = TRUE,alpha=.5) + 
@@ -64,23 +65,53 @@ data %>%
 # Using Playlist_Comparison_Function --------------------------------------
 comparison_data <- Playlist_Comparison_Function(data %>% select(-full_lyrics))
 
+
 #Danceability
-comparison_data %>% 
+(p1 <- comparison_data %>% 
   ggplot(aes(x=Playlist,y=`Median Danceability`,group=1)) +
   geom_line(color="#1DB954",size=1.5) +
   geom_point(color="#1DB954",size=5) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  labs(title="Danceability") +
   theme_minimal() +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(angle = 30,hjust = 1))
+  theme(axis.title = element_blank(),
+        plot.title.position = "plot"))
 
 #Energy
-comparison_data %>% 
+(p2 <- comparison_data %>% 
   ggplot(aes(x=Playlist,y=`Median Energy`,group=1)) +
   geom_line(color="#1DB954",size=1.5) +
   geom_point(color="#1DB954",size=5) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  labs(title="Energy") +
   theme_minimal() +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(angle = 30,hjust = 1))
+  theme(axis.title = element_blank(),
+        plot.title.position = "plot"))
+
+
+#Median Loudness
+(p3 <- comparison_data %>% 
+  ggplot(aes(x=Playlist,y=`Median Loudness`,group=1)) +
+  geom_line(color="#1DB954",size=1.5) +
+  geom_point(color="#1DB954",size=5) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  labs(title="Loudness (dB)") +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        plot.title.position = "plot"))
+
+#Median Tempo
+(p4 <- comparison_data %>% 
+  ggplot(aes(x=Playlist,y=`Median Tempo`,group=1)) +
+  geom_line(color="#1DB954",size=1.5) +
+  geom_point(color="#1DB954",size=5) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  labs(title="Tempo (BPM)") +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        plot.title.position = "plot"))
+
+p1 + p2 + p3 + p4 + plot_layout(ncol=2)
 
 #Valence
 comparison_data %>% 
@@ -90,6 +121,16 @@ comparison_data %>%
   theme_minimal() +
   theme(axis.title.x = element_blank(),
         axis.text.x = element_text(angle = 30,hjust = 1))
+
+#Percent in Major
+comparison_data %>% 
+  ggplot(aes(x=Playlist,y=`Percent in Major`,group=1)) +
+  geom_line(color="#1DB954",size=1.5) +
+  geom_point(color="#1DB954",size=5) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 30,hjust = 1))
+
 
 #Duration
 comparison_data %>% 
@@ -124,33 +165,6 @@ comparison_data %>%
 #total words
 comparison_data %>% 
   ggplot(aes(x=Playlist,y=`Total Words`,group=1)) +
-  geom_line(color="#1DB954",size=1.5) +
-  geom_point(color="#1DB954",size=5) +
-  theme_minimal() +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(angle = 30,hjust = 1))
-
-#Median Loudness
-comparison_data %>% 
-  ggplot(aes(x=Playlist,y=`Median Loudness`,group=1)) +
-  geom_line(color="#1DB954",size=1.5) +
-  geom_point(color="#1DB954",size=5) +
-  theme_minimal() +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(angle = 30,hjust = 1))
-
-#Median Tempo
-comparison_data %>% 
-  ggplot(aes(x=Playlist,y=`Median Tempo`,group=1)) +
-  geom_line(color="#1DB954",size=1.5) +
-  geom_point(color="#1DB954",size=5) +
-  theme_minimal() +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(angle = 30,hjust = 1))
-
-#Percent in Major
-comparison_data %>% 
-  ggplot(aes(x=Playlist,y=`Percent in Major`,group=1)) +
   geom_line(color="#1DB954",size=1.5) +
   geom_point(color="#1DB954",size=5) +
   theme_minimal() +
@@ -332,6 +346,7 @@ ggplot(top_5_words, aes(words, n, fill = Playlist)) +
 
 
 # Most Unique Words -------------------------------------------------------
+#source(here("Analysis/Getting_Relative_Importance.R"))
 Relative_Importance <- read_rds(here("data/Relative_Importance.rds"))
 Top_10_Relative_Importance <- Relative_Importance %>% 
   select(Playlist,words,difference) %>%
@@ -349,3 +364,32 @@ Top_10_Relative_Importance %>%
   coord_flip() +
   scale_x_reordered() +
   theme_minimal()
+
+
+# Correcting Negate Words -------------------------------------------------
+afinn <- read_rds(here("Getting_Wrapped_Data/functions/afinn_data.rds"))
+data <- read_rds(here("data/Full_Data.rds"))
+negate_words <- c("not","no","never","won't","don't","can't")
+
+corrected_overall_sentiment <- data %>% 
+  select(Playlist,Song,full_lyrics) %>% 
+  unnest_tokens(input = full_lyrics,output = "word",token="words") %>% 
+  filter(word %in% c(afinn$word,negate_words)) %>%
+  left_join(afinn) %>% 
+  mutate(corrected_value=case_when(
+    (Playlist==lag(Playlist) & Song==lag(Song) & lag(word) %in% negate_words)~value*-1,
+    TRUE~value
+  )) %>% 
+  group_by(Playlist) %>% 
+  summarise(Corrected_Sentiment=mean(corrected_value,na.rm = T),
+            Uncorrected_Sentiment=mean(value,na.rm = T))
+  
+corrected_overall_sentiment %>% 
+  pivot_longer(cols = Corrected_Sentiment:Uncorrected_Sentiment,names_to="correct",values_to="sentiment") %>% 
+  ggplot(aes(x=Playlist,y=sentiment,color=correct,group=correct)) +
+  geom_line(size=1.5) +
+  geom_point(size=5) +
+  scale_color_manual(values = c("#1DB954","grey70")) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 30,hjust = 1))

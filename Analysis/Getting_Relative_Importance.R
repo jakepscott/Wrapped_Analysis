@@ -5,6 +5,10 @@ library(ggimage)
 
 windowsFonts(`Roboto Condensed`=windowsFont("Roboto Condensed"))
 
+#**********************
+#NOTE! This cannot be run on its own, it gets called by "Exploratory" file
+#***********************
+
 # Getting Outside Proportion ----------------------------------------------
 #First I make an empty tibble which will eventually contain the album, word, and proportion
 #of all words made up by that word outside the given album. So if the album is RTJ2 and the word
