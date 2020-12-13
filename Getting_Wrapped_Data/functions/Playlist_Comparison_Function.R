@@ -9,13 +9,13 @@ Playlist_Comparison_Function <- function(data) {
      #Continuous
     Song_Features <- data %>% 
       group_by(Playlist) %>% 
-      summarise(across(c("Danceability","Energy","Loudness","Valence","Tempo",`Duration (Minutes)`),list(mean=mean), na.rm=T)) %>% 
-      #Adding mean in front of the name
-      rename_if(str_detect(names(.),"_mean"),~paste("Mean",.,sep=" ")) 
+      summarise(across(c("Danceability","Energy","Loudness","Valence","Tempo",`Duration (Minutes)`),list(median=median), na.rm=T)) %>% 
+      #Adding median in front of the name
+      rename_if(str_detect(names(.),"_median"),~paste("Median",.,sep=" ")) 
       
-      colnames(Song_Features) <- Song_Features %>% colnames() %>% str_remove("_mean") 
+      colnames(Song_Features) <- Song_Features %>% colnames() %>% str_remove("_median") 
       
-      Song_Features <- Song_Features %>% rename("Mean Song Duration (Minutes)"=`Mean \`Duration (Minutes)\``)
+      Song_Features <- Song_Features %>% rename("Median Song Duration (Minutes)"=`Median \`Duration (Minutes)\``)
       
     
     Playlist_Data <- left_join(Playlist_Data,Song_Features)
@@ -28,12 +28,12 @@ Playlist_Comparison_Function <- function(data) {
       summarise(`Percent in Major`=mean(Mode,na.rm = T))
     Playlist_Data <- left_join(Playlist_Data,Mode)
     
-    #Mean of Key
+    #Median of Key
     Key <- data %>% 
       select(Playlist,Key) %>% 
       mutate(Key=as.numeric(Key)) %>% 
       group_by(Playlist) %>% 
-      summarise(`Mean Key (0 is C)`=mean(Key,na.rm = T))
+      summarise(`Median Key (0 is C)`=median(Key,na.rm = T))
     Playlist_Data <- left_join(Playlist_Data,Key)
     
     #Gender
@@ -53,7 +53,7 @@ Playlist_Comparison_Function <- function(data) {
     Release_Dates <- data %>% 
       select(Playlist,`Years Since Release`) %>% 
       group_by(Playlist) %>%  
-      summarise(`Mean Years Since Release`=mean(`Years Since Release`,na.rm = T))
+      summarise(`Median Years Since Release`=median(`Years Since Release`,na.rm = T))
     
     #
     
@@ -90,7 +90,7 @@ Playlist_Comparison_Function <- function(data) {
                             Conscious==FALSE &
                             Country==FALSE &
                             LGBT==FALSE,yes = TRUE,no = FALSE))
-    #Making a mean times 100 function, should be able to do this within the summarise function but I cannot figure out how
+    #Making a median times 100 function, should be able to do this within the summarise function but I cannot figure out how
     mean_100 <- function(x){
       mean(x*100)
     }
@@ -123,7 +123,7 @@ Playlist_Comparison_Function <- function(data) {
       select(Playlist, `Total Words`,`Overall Sentiment`) %>% 
       group_by(Playlist) %>% 
       summarise(`Total Words`=sum(`Total Words`,na.rm = T),
-                `Average Overall Sentiment`=mean(`Overall Sentiment`,na.rm = T))
+                `Average Overall Sentiment`=median(`Overall Sentiment`,na.rm = T))
     
     Emotion_Words <- data %>% 
       select(Playlist,contains("Number of")) %>% 
