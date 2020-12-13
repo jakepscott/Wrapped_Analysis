@@ -92,7 +92,7 @@ Playlist_Comparison_Function <- function(data) {
                             LGBT==FALSE,yes = TRUE,no = FALSE))
     #Making a median times 100 function, should be able to do this within the summarise function but I cannot figure out how
     mean_100 <- function(x){
-      mean(x*100)
+      mean(x*100,na.rm=T)
     }
     
     Genres <- genres %>% 
