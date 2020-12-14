@@ -52,7 +52,3 @@ Lyric_Features <- Lyric_Analysis_Function(Full_Lyrics) %>% select(-Lyrics)
 Full_Data <- left_join(left_join(tracks,Features),Lyric_Features) %>% distinct()
 #saveRDS(Full_Data,here("data/Full_Data.rds"))
 
-#Playlist analysis
-Full_Data %>% 
-  select(!c(Artist_full,Id,Artist_id,Album_id)) %>% 
-  Playlist_Comparison_Function()
