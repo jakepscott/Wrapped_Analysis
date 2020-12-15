@@ -138,14 +138,14 @@ Features_Function <- function(track_data, features=
     Artist_info <- Artist_info %>% rename("Artist_id"=id,"Artist"=name,`Artist Genres`=genres) %>% 
       mutate(`Artist Genres`=toTitleCase(str_replace_all(`Artist Genres`,";", ", "))) %>% 
       select(Artist_id,Artist,`Artist Genres`)
-    track_data <- left_join(track_data,Artist_info) %>% select(-Artist_full)
+    track_data <- left_join(track_data,Artist_info) 
     cat("\nGot Genres!\n")
   }
   
   
   
   # Joining with Gender of Artist -------------------------------------------
-  genders <- read_rds(here("Getting_Wrapped_Data/functions/artist_genders.rds")) %>% rename("Artist"=artist,`Artist Gender`=genders)
+  genders <- read_rds(here("03_Obtain_Top-200-Data/data/artist_genders.rds")) %>% rename("Artist"=artist,`Artist Gender`=genders)
   track_data <- left_join(track_data,genders)
   
   

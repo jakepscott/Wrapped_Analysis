@@ -11,8 +11,8 @@ library(genius)
 library(stringi)
 library(tools)
 library(textdata)
-nrc_data <- read_rds(here("Getting_Wrapped_Data/functions/nrc_data.rds"))
-afinn_data <- read_rds(here("Getting_Wrapped_Data/functions/afinn_data.rds"))
+nrc_data <- read_rds(here("03_Obtain_Top-200-Data/data/nrc_data.rds"))
+afinn_data <- read_rds(here("03_Obtain_Top-200-Data/data/afinn_data.rds"))
 Lyric_Analysis_Function <- function(Lyrics){
   
   #only works if there is at least 1 song in the track_data object
