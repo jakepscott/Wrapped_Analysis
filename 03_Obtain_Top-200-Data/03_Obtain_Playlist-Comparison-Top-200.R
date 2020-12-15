@@ -11,13 +11,11 @@ library(genius)
 library(stringi)
 library(here)
 
-source("03_Obtain_Top-200-Data/functions/Playlist_Comparison_Function.R")
-data <- read_rds(here("data/Full_Top_200_Feat_Lyrics_Data.rds"))
-data_clean <- data %>% select(-URL,-uri,-analysis_url,-artist_id,-Artist_id,-album_id,-Album_id,-label,
-                -album_popularity,-album_type,-followers,-album_dummy,-time_signature_dummy,-Playlist,-Streams,-album)
-names(data_clean) <- str_to_title(names(data_clean))
+source(here("03_Obtain_Top-200-Data/functions/04-Compare_Top200_Playlists_Function.R"))
+data <- read_rds(here("03_Obtain_Top-200-Data/data/Full_Top_200_Feat_Lyrics_Data.rds"))
+data <- data %>% mutate(Playlist=as.character(year(date)))
 
-comparison_data <- data_clean %>% mutate(Playlist=year(Date)) %>% Playlist_Comparison_Function()
+comparison_data <- data %>% Playlist_Comparison_Function()
 
 saveRDS(comparison_data,here("03_Obtain_Top-200-Data/data/Top200_Playlist_Data"))
 saveRDS(comparison_data,here("data/Top200_Playlist_Data"))

@@ -25,13 +25,14 @@ all_songs <- read_rds(here("03_Obtain_Top-200-Data/data/Jan_2017_Dec_2020.rds"))
   #Playlists here are the years
   mutate(Playlist=year(date)) %>% 
   #Selecting only those columns I'd get from Tracks_Function
-  select(Song,Id, Artist,"Artist_id"=artist_id,"Album"=album,"Album_id" = album_id,Playlist) 
+  select(date, Song,Id, Artist,"Artist_id"=artist_id,"Album"=album,"Album_id" = album_id,Playlist) 
 
 
  
   
 #Getting just distinct songs, so I only get lyrics and lyrics features for each song once
 data <- all_songs %>%
+  select(-date) %>% 
   distinct(Id,.keep_all = T)
 
 
