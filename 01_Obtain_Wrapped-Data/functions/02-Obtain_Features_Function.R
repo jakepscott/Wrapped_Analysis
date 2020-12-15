@@ -71,7 +71,7 @@ Features_Function <- function(track_data, features=
     track_info <- track_info %>% rename("Id"=track_id,
                                         "Explicit?"=explicit) %>% select(Id,`Explicit?`)
     
-    tracks <- left_join(track_data,track_info)
+    track_data <- left_join(track_data,track_info)
     cat("\nGot Explicit Status!\n")
   }
   
@@ -144,7 +144,7 @@ Features_Function <- function(track_data, features=
   
   
   # Joining with Gender of Artist -------------------------------------------
-  genders <- read_rds(here("Getting_Wrapped_Data/functions/artist_genders.rds")) %>% rename("Artist"=artist,`Artist Gender`=genders)
+  genders <- read_rds(here("Getting_Wrapped_Data/data/artist_genders.rds")) %>% rename("Artist"=artist,`Artist Gender`=genders)
   track_data <- left_join(track_data,genders)
   
   

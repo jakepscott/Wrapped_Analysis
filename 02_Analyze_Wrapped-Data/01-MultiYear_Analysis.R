@@ -6,26 +6,28 @@ library(ggridges)
 library(lexicon)
 library(ggtext)
 library(here)
-source(here("Getting_Wrapped_Data/functions/Playlist_Comparison_Function.R"))
+library(patchwork)
+library(stringr)
+library(scales)
 
-data <- read_rds(here("data/Full_Data.rds"))
+data <- read_rds(here("data/Full_Wrapped_Feat_Lyrics_Data.rds"))
+comparison_data <- read_rds(here("data/Wrapped_Playlist_Data.rds"))
+comparison_data <- comparison_data %>% rename("Median Loudness (dB)"=`Median Loudness`,
+                                              "Median Tempo (BPM)"=`Median Tempo`,
+                                              "Percent of Songs That Are Explicit"=`Percent Explicit`)
 
+theme_set(theme_minimal(base_size = 12))
 
 # Features ----------------------------------------------------------------
-comparison_data <- Playlist_Comparison_Function(data %>% select(-full_lyrics),wrapped = 1)
-comparison_data <- comparison_data %>% rename("Median Loudness (dB)"=`Median Loudness`,
-                                              "Median Tempo (BPM)"=`Median Tempo`)
-
 comparison_data %>% 
-  select(Playlist,`Median Danceability`:`Median Years Since Release (Adj)`,`Total Words`) %>% 
+  select(Playlist,`Median Danceability`:`Median Years Since Release (Adj)`,`Total Words`,`Percent of Songs That Are Explicit`) %>% 
   select(-`Median Key (0 is C)`) %>% 
-  pivot_longer(`Median Danceability`:`Total Words`,names_to="Feature") %>% 
+  pivot_longer(`Median Danceability`:`Percent of Songs That Are Explicit`,names_to="Feature") %>% 
   ggplot(aes(x=Playlist,y=value,group=1)) +
   geom_line(color="#1DB954",size=1.5) +
   geom_point(color="#1DB954",size=5) +
   facet_wrap(~Feature,scales = "free_y") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_minimal(base_size = 12) +
   theme(axis.title = element_blank(),
         plot.title.position = "plot",
         strip.text = element_text(size=rel(1.5)))
@@ -41,7 +43,6 @@ genres %>% pivot_longer(cols=`Percent Hip Hop`:`Percent Other`,names_to="Genre",
   geom_point(color="#1DB954",size=5) +
   facet_wrap(~Genre,scales = "free_y") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_minimal(base_size = 12) +
   theme(axis.title = element_blank(),
         plot.title.position = "plot",
         strip.text = element_text(size=rel(1.5)))
@@ -62,15 +63,13 @@ sentiments %>%
   facet_wrap(~Genre,scales = "free_y") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
   labs(title="Percent of Words in Given Sentiment Cateogry") +
-  theme_minimal(base_size = 12) +
   theme(plot.title = element_text(size = rel(2)),
         axis.title = element_blank(),
         plot.title.position = "plot",
         strip.text = element_text(size=rel(1.5)))
 
 # Overall Sentiment -------------------------------------------------
-afinn <- read_rds(here("Getting_Wrapped_Data/functions/afinn_data.rds"))
-data <- read_rds(here("data/Full_Data.rds"))
+afinn <- read_rds(here("01_Obtain_Wrapped-Data/data/afinn_data.rds"))
 negate_words <- c("not","no","never","won't","don't","can't")
 
 corrected_overall_sentiment <- data %>% 
@@ -96,13 +95,11 @@ corrected_overall_sentiment %>%
   guides(color="none") +
   labs(title="<span style='color: #1DB954'>**Corrected**</span> versus <span style='color: #A9A9A9'>**Uncorrected**</span> Overall Sentiment",
        subtitle = "Corrected means I account for \"negation\" words like \"not\"") +
-  theme_minimal() +
   theme(plot.title=element_markdown(),
         axis.title.x = element_blank(),
         plot.title.position = "plot")
 
 # Top Artists -------------------------------------------------------------
-data %>% count(Artist) %>% arrange(desc(n))
 Artists <- data %>% count(Playlist,Artist) %>% arrange(desc(n)) %>% 
   group_by(Playlist) %>% 
   top_n(5, n) %>% 
@@ -121,7 +118,6 @@ Artists$Playlist <- factor(Artists$Playlist,
     scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
     labs(title="Top Artists by Year",
          y="Count") +
-    theme_minimal(base_size = 12) +
     theme(plot.title = element_text(size = rel(2)),
           plot.title.position = "plot",
           axis.text.y = element_text(face="bold")))
@@ -135,7 +131,6 @@ Artists$Playlist <- factor(Artists$Playlist,
     geom_point(color="#1DB954",size=5) +
     scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
     labs(title="Number of Distinct Artists") +
-    theme_minimal(base_size = 12) +
     theme(plot.title = element_text(size = rel(2)),
           axis.title = element_blank(),
           plot.title.position = "plot"))
@@ -152,6 +147,7 @@ words <- Lyrics %>%
 interesting_words <- words %>% 
   #Removing stop words
   anti_join(stop_words, by=c("words"="word")) %>% 
+  #Removing racist and profane words
   anti_join(tibble(words=lexicon::profanity_racist)) %>% 
   anti_join(tibble(words=lexicon::profanity_alvarez)) %>% 
   #Removing more stop words
@@ -180,27 +176,46 @@ ggplot(top_5_words, aes(words, n, fill = Playlist)) +
   scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
   labs(title="Top Words by Year",
        y="Count") +
-  theme_minimal(base_size = 12) +
   theme(plot.title = element_text(size = rel(2)),
         plot.title.position = "plot",
         axis.text.y = element_text(face="bold"))
+
+
+# Percent of Explicit Words -----------------------------------------------
+words %>% 
+  mutate(explicit=ifelse(words %in% lexicon::profanity_racist | words %in% lexicon::profanity_alvarez,1,0)) %>% 
+  group_by(Playlist) %>% 
+  summarise(Percent_Explicit=mean(explicit,na.rm = T)) %>% 
+  ggplot(aes(x=Playlist,y=Percent_Explicit,group=1)) +
+  geom_line(color="#1DB954",size=1.5) +
+  geom_point(color="#1DB954",size=5) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
+  labs(title="Percent of all Words that are Explicit") +
+  theme(axis.title = element_blank(),
+        plot.title.position = "plot",
+        strip.text = element_text(size=rel(1.5)))
+
+  
+  
 
 # Most Unique Words -------------------------------------------------------
 #source(here("Analysis/Getting_Relative_Importance.R"))
 Relative_Importance <- read_rds(here("data/Relative_Importance.rds"))
 Top_10_Relative_Importance <- Relative_Importance %>% 
-  select(Playlist,words,difference) %>%
+  select(Playlist,word,difference) %>%
   distinct() %>% 
   group_by(Playlist) %>% 
-  top_n(5, difference) %>% 
-  mutate(words=reorder_within(x = words,within = Playlist,by = difference))  
+  top_n(5, difference) %>%
+  mutate(word=str_to_title(word)) %>% 
+  mutate(word=reorder_within(x = word,within = Playlist,by = difference))  
 
 Top_10_Relative_Importance$Playlist <- factor(Top_10_Relative_Importance$Playlist,
                                               levels=c("Your Top Songs 2017","Your Top Songs 2018","Your Top Songs 2019","Your Top Songs 2020"),
                                               labels=c("2017","2018","2019","2020"))
 
-Top_10_Relative_Importance %>%  
-  ggplot(aes(words, difference, fill = Playlist)) +
+Top_10_Relative_Importance %>%
+  ggplot(aes(word, difference, fill = Playlist)) +
   geom_col(show.legend = FALSE) +
   labs(x = NULL, y = "count") +
   facet_wrap(~Playlist, ncol = 2, scales = "free_y") +
@@ -214,4 +229,4 @@ Top_10_Relative_Importance %>%
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(size = rel(2)),
         plot.title.position = "plot",
-        axis.text.y = element_text(face="bold"))
+        axis.text.y = element_text(face="bold")) 
