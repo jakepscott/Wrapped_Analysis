@@ -72,7 +72,7 @@ Features_Function <- function(track_data, features=
     track_info <- track_info %>% rename("Id"=track_id,
                                         "Explicit?"=explicit) %>% select(Id,`Explicit?`)
     
-    tracks <- left_join(track_data,track_info)
+    track_data <- left_join(track_data,track_info)
     cat("\nGot Explicit Status!\n")
   }
   

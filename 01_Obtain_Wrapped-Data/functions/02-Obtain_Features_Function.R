@@ -144,7 +144,7 @@ Features_Function <- function(track_data, features=
   
   
   # Joining with Gender of Artist -------------------------------------------
-  genders <- read_rds(here("Getting_Wrapped_Data/data/artist_genders.rds")) %>% rename("Artist"=artist,`Artist Gender`=genders)
+  genders <- read_rds(here(here("01_Obtain_Wrapped-Data/data/artist_genders.rds"))) %>% rename("Artist"=artist,`Artist Gender`=genders)
   track_data <- left_join(track_data,genders)
   
   
