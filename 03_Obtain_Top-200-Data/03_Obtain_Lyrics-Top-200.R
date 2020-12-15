@@ -12,32 +12,32 @@ library(stringi)
 library(here)
 
 # Loading Necessary Data and Functions ------------------------------------
-load(here("03_Obtain_Top-200-Data/functions/keys"))
-source(here("03_Obtain_Top-200-Data/functions/Gen_Top200_Features.R"))
-source(here("03_Obtain_Top-200-Data/functions/Analyze_Top200_Lyrics.R"))
-source(here("03_Obtain_Top-200-Data/functions/Gen_Top200_Lyrics.R"))
-source("03_Obtain_Top-200-Data/functions/Playlist_Comparison_Function.R")
+load(here("03_Obtain_Top-200-Data/data/keys"))
+source(here("03_Obtain_Top-200-Data/functions/01-Obtain_Top200_Features_Function.R"))
+source(here("03_Obtain_Top-200-Data/functions/02-Obtain_Top200_Lyrics_Function.R"))
+source(here("03_Obtain_Top-200-Data/functions/03-Analyze_Top200_Lyrics_Function.R"))
 
 
 # Load_Data ---------------------------------------------------------------
 #NOTE: This data already has feature information, so do not need to use the Features_Function below. 
 all_songs <- read_rds(here("03_Obtain_Top-200-Data/data/Jan_2017_Dec_2020.rds")) %>% #Getting consistent names
   rename("Song"=Track_Name,"Id"=URI) 
-  
 
-#Getting just distinct songs, so I only get lyrics and lyrics features for each song once
-data <- data %>% 
+set.seed(16)
+test <- all_songs %>% 
+  sample_n(20) %>% 
   #Playlists here are the years
   mutate(Playlist=year(date)) %>% 
   #Selecting only those columns I'd get from Tracks_Function
-  select(Song,Id, Artist,"Artist_id"=artist_id,"Album"=album,"Album_id" = album_id,Playlist) %>% 
-  distinct(Id,.keep_all = T)
-
+  select(Song,Id, Artist,"Artist_id"=artist_id,"Album"=album,"Album_id" = album_id,Playlist) 
+  
+#Getting just distinct songs, so I only get lyrics and lyrics features for each song once
+data <- test %>% distinct(Id,.keep_all = T)
 
 
 # Get Features (Unnecessary Here, already have them) -----------------------------------------
-#Features <- Features_Function(track_data = data)
-#saveRDS(Features,here("03_Obtain_Top-200-Data/data_new/Top200_Features.rds"))
+Features <- Features_Function(track_data = data)
+#saveRDS(Features,here("03_Obtain_Top-200-Data/data/Top200_Features.rds"))
 
 
 # Get Lyrics and Lyric Features --------------------------------------------------------------
@@ -52,8 +52,17 @@ Lyric_Features <- Lyric_Features %>% distinct()
 #saveRDS(Lyric_Features,here("03_Obtain_Top-200-Data/data_new/Top200_Lyric_Features.rds"))
 
 #Getting a full lyrics column
+Lyrics_Column <- Lyrics %>% select(Id,Lyrics) %>% mutate(full_lyrics="a")
+
+for (i in 1:nrow(Lyrics)) {
+  Lyrics_Column$full_lyrics[i] <- Lyrics_Column$Lyrics[[i]] %>% paste(collapse = " ")
+}
+
 
 #Joining
-Full_Data <-  all_songs %>% left_join(Lyrics) %>% left_join(Lyric_Features) 
-saveRDS(Full_Data,here("03_Obtain_Top-200-Data/data_new/Full_Top_200_Data.rds"))
+Feat_Lyric_Data <-  data %>% left_join(Features) %>% left_join(Lyrics) %>% left_join(Lyric_Features) %>% left_join(Lyrics_Column)
+Full_Data <- test %>% left_join(Feat_Lyric_Data)
+#saveRDS(Full_Data,here("03_Obtain_Top-200-Data/data/Full_Top_200_Feat_Lyrics_Data.rds"))
+#saveRDS(Full_Data,here("data/Full_Top_200_Feat_Lyrics_Data.rds"))
+
 
