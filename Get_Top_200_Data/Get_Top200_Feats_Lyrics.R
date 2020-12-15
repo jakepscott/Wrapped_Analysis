@@ -20,9 +20,12 @@ source("Get_Top_200_Data/functions/Playlist_Comparison_Function.R")
 
 
 # Load_Data ---------------------------------------------------------------
+#NOTE: This data already has feature information, so do not need to use the Features_Function below. 
 all_songs <- read_rds(here("Get_Top_200_Data/data/Jan_2017_Dec_2020.rds")) %>% #Getting consistent names
   rename("Song"=Track_Name,"Id"=URI) 
   
+
+#Getting just distinct songs, so I only get lyrics and lyrics features for each song once
 data <- data %>% 
   #Playlists here are the years
   mutate(Playlist=year(date)) %>% 
@@ -31,10 +34,14 @@ data <- data %>%
   distinct(Id,.keep_all = T)
 
 
-#Get Features
+
+# Get Features (Unnecessary Here) -----------------------------------------
 #Features <- Features_Function(track_data = data)
 #saveRDS(Features,here("Get_Top_200_Data/data_new/Top200_Features.rds"))
-#Get lyrics using function
+
+
+# Get Lyrics and Lyric Features --------------------------------------------------------------
+#Raw features
 Lyrics <- Lyric_Generation_Function(data)
 #saveRDS(Lyrics,here("Get_Top_200_Data/data_new/Top200_Lyrics.rds"))
 
@@ -44,6 +51,7 @@ Lyric_Features <- Lyric_Analysis_Function(Lyrics) %>% select(-Lyrics)
 Lyric_Features <- Lyric_Features %>% distinct()
 #saveRDS(Lyric_Features,here("Get_Top_200_Data/data_new/Top200_Lyric_Features.rds"))
 
+#Getting a full lyrics column
 
 #Joining
 Full_Data <-  all_songs %>% left_join(Lyrics) %>% left_join(Lyric_Features) 
