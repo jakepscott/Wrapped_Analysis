@@ -157,9 +157,11 @@ top_5_words <- interesting_words %>%
   count(Playlist,words) %>% 
   arrange(desc(n)) %>% 
   group_by(Playlist) %>% 
-  top_n(5, n) %>% 
+  mutate(total=sum(n),
+         percent=(n/total)*100) %>% 
+  top_n(5, percent) %>% 
   mutate(words=str_to_title(words)) %>% 
-  mutate(words=reorder_within(x = words,within = Playlist,by = n))
+  mutate(words=reorder_within(x = words,within = Playlist,by = percent))
 
 top_5_words$Playlist <- factor(top_5_words$Playlist,
                                levels=c("Your Top Songs 2017","Your Top Songs 2018","Your Top Songs 2019","Your Top Songs 2020"),
@@ -168,14 +170,14 @@ top_5_words$Playlist <- factor(top_5_words$Playlist,
 
 ggplot(top_5_words, aes(words, n, fill = Playlist)) +
   geom_col(show.legend = FALSE) +
-  labs(x = NULL, y = "count") +
+  labs(x = NULL, y = "percent") +
   facet_wrap(~Playlist, ncol = 2, scales = "free_y") +
   scale_y_continuous(expand = c(0,0)) +
   coord_flip() +
   scale_x_reordered() +
   scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
   labs(title="Top Words by Year",
-       y="Count") +
+       y="Percent") +
   theme(plot.title = element_text(size = rel(2)),
         plot.title.position = "plot",
         axis.text.y = element_text(face="bold"))
