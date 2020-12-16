@@ -10,7 +10,7 @@ library(here)
 # Setting Up Dates --------------------------------------------------------
 ##
 #2020-05-03 is the last day for which I had data before running this, hence why it is from
-dates <- seq.Date(from = as_date("2020-05-03"),to = Sys.Date()-1, by = "day") %>% tibble("date"=.) %>% mutate(date=as.character(date))
+dates <- seq.Date(from = as_date("2017-01-01"),to = as_date("2020-12-05")-1, by = "day") %>% tibble("date"=.) %>% mutate(date=as.character(date))
 
 ##
 # Getting URLs for the top 200s for the above dates -----------------------
@@ -82,7 +82,7 @@ for (i in 1:length(files)) {
   tryCatch({  
     append <- read_csv(paste(here("spotify_csvs/",files[i],sep="")),skip = 1)
     append <- append %>% dplyr::mutate(date = as.character(dates[i,]))
-    test <- rbind(test,append)}, error=function(e){print(e)})
+    test <- bind_rows(test,append)}, error=function(e){print(e)})
 }
 top_data <- test[-1,]
 
@@ -93,4 +93,4 @@ top_data <- top_data %>% mutate(url2=URL) %>% separate(url2, into = c(1,2,3,4,"U
 
 
 # Saving RDS of this raw song data ----------------------------------------
-saveRDS(top_data,here("03_Obtain_Top-200-Data/data/May5_to_Dec5_raw.rds"))
+saveRDS(top_data,here("03_Obtain_Top-200-Data/data/Jan_2017_Dec_2020.rds"))
