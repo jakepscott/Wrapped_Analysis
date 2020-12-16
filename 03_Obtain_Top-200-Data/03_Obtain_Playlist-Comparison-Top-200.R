@@ -17,5 +17,5 @@ data <- data %>% mutate(Playlist=as.character(year(date)))
 
 comparison_data <- data %>% Playlist_Comparison_Function()
 
-saveRDS(comparison_data,here("03_Obtain_Top-200-Data/data/Top200_Playlist_Data"))
-saveRDS(comparison_data,here("data/Top200_Playlist_Data"))
+saveRDS(comparison_data,here("03_Obtain_Top-200-Data/data/Top200_Playlist_Data.rds"))
+saveRDS(comparison_data,here("data/Top200_Playlist_Data.rds"))
