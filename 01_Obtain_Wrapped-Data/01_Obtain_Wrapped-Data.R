@@ -20,7 +20,7 @@ source(here("01_Obtain_Wrapped-Data/functions/01-Obtain_Tracks_Function.R"))
 source(here("01_Obtain_Wrapped-Data/functions/02-Obtain_Features_Function.R"))
 source(here("01_Obtain_Wrapped-Data/functions/03-Obtain_Lyrics_Function.R"))
 source(here("01_Obtain_Wrapped-Data/functions/04-Analyze_Lyrics_Function.R"))
-source("01_Obtain_Wrapped-Data/functions/05-Compare_Playlists_Function.R")
+source(here("01_Obtain_Wrapped-Data/functions/05-Compare_Playlists_Function.R"))
 
 
 
