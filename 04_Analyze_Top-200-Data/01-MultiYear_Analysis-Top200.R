@@ -13,7 +13,8 @@ library(scales)
 data <- read_rds(here("data/Full_Top_200_Feat_Lyrics_Data.rds"))
 comparison_data <- read_rds(here("data/Top200_Playlist_Data.rds"))
 comparison_data <- comparison_data %>% rename("Median Loudness (dB)"=`Median Loudness`,
-                                              "Median Tempo (BPM)"=`Median Tempo`)
+                                              "Median Tempo (BPM)"=`Median Tempo`,
+                                              "Percent of Songs That Are Explicit"=`Percent Explicit`)
 
 theme_set(theme_minimal(base_size = 12))
 

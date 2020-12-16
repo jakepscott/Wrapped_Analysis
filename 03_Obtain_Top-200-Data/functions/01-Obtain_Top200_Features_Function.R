@@ -59,6 +59,7 @@ Features_Function <- function(track_data, features=
     
     for(i in 1:length(ids)){#for each song
       tryCatch({
+        print(i)
         Sys.sleep(.01)
         track_info<-bind_rows(track_info,getTrack(ids[i],token=keys))
       }, error=function(e){})
