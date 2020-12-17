@@ -2,11 +2,10 @@
 library(tidyverse)
 library(readr)
 library(tidytext)
-library(ggimage)
 library(here)
 
 #Load Data
-data <- read_rds(here("01_Obtain_Wrapped-Data/data/Full_Wrapped_Feat_Lyrics_Data.rds"))
+data <- read_rds(here("03_Obtain_Top-200-Data/data/Full_Top_200_Feat_Lyrics_Data.rds"))
 
 Lyrics <- data %>% select(Playlist,Id,Song,full_lyrics)
 
@@ -24,17 +23,17 @@ interesting_words <- words %>%
   #Removing more stop words
   filter(!(word %in% c("ya","yea","yeah","oh","ohh","ooh","ay","ayy","uh","gon"))) 
 
-
 # Getting Outside Proportion ----------------------------------------------
 #First I make an empty tibble which will eventually contain the album, word, and proportion
 #of all words made up by that word outside the given album. So if the album is Your Top Songs 2020 and the word
 #is run, the percent_outside column will be the proportion of words outside Your Top Songs 2020 that are "run"
-outside_values <- tibble(Playlist=character(0),word=character(0),percent_outside=double(0))
+outside_values <- tibble(Playlist=double(0),word=character(0),percent_outside=double(0))
 tictoc::tic()
-for (i in unique(data$Playlist)) {
+for (i in unique(interesting_words$Playlist)) {
   print(i)
   for (z in interesting_words %>% filter(Playlist==i) %>% distinct(word) %>% pull(word)) {
     #Get the number of words outside the album
+    print(z)
     total_outside_words <- interesting_words %>% 
       filter(Playlist!=i) %>% 
       #distinct(words) %>% 
