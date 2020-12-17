@@ -207,7 +207,7 @@ words %>%
 
 # Most Unique Words -------------------------------------------------------
 #source(here("Analysis/Getting_Relative_Importance.R"))
-Relative_Importance <- read_rds(here("data/Relative_Importance.rds"))
+Relative_Importance <- read_rds(here("data/Top200_Relative_Importance.rds"))
 Top_10_Relative_Importance <- Relative_Importance %>% 
   select(Playlist,word,difference) %>%
   distinct() %>% 
@@ -236,3 +236,35 @@ Top_10_Relative_Importance %>%
   theme(plot.title = element_text(size = rel(2)),
         plot.title.position = "plot",
         axis.text.y = element_text(face="bold")) 
+
+#Removing some extra stop words
+Relative_Importance_2 <- read_rds(here("data/Top200_Relative_Importance_2_more_stopwords_removed.rds"))
+Top_10_Relative_Importance_2 <- Relative_Importance_2 %>% 
+  select(Playlist,word,difference) %>%
+  distinct() %>% 
+  group_by(Playlist) %>% 
+  top_n(5, difference) %>%
+  mutate(word=str_to_title(word)) %>% 
+  mutate(word=reorder_within(x = word,within = Playlist,by = difference))  
+
+Top_10_Relative_Importance_2$Playlist <- factor(Top_10_Relative_Importance_2$Playlist,
+                                              levels=c("2017","2018","2019","2020"),
+                                              labels=c("2017","2018","2019","2020"))
+
+Top_10_Relative_Importance_2 %>%
+  ggplot(aes(word, difference, fill = Playlist)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "count") +
+  facet_wrap(~Playlist, ncol = 2, scales = "free_y") +
+  scale_y_continuous(expand = c(0,0)) +
+  coord_flip() +
+  scale_x_reordered() +
+  scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
+  labs(title="Most Uniquely Important Words for Each Year",
+       subtitle = "Percent of words made up by word X in year Y minus percent of words made up of word X outside of year Y",
+       y="Proportional Importance") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(size = rel(2)),
+        plot.title.position = "plot",
+        axis.text.y = element_text(face="bold")) 
+
