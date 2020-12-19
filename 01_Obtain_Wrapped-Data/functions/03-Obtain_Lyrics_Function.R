@@ -63,6 +63,15 @@ Lyric_Generation_Function <- function(track_data){
   missed <- missed %>% filter(!is.na(Song))
   percent_captured <- round((nrow(Lyrics)-nrow(missed))/nrow(Lyrics)*100,digits = 1)
   cat("I managed to get lyrics for", percent_captured, "percent of songs!") 
-  Lyrics <- Lyrics %>% select(-c(song2,artist2)) 
+  Lyrics <- Lyrics %>% select(-c(song2,artist2))
+  
+
+# Get a column where each entry is all words ------------------------------
+Lyrics <- Lyrics %>% mutate(full_lyrics="a")
+  
+  for (i in 1:nrow(Lyrics)) {
+    Lyrics$full_lyrics[i] <- Lyrics$Lyrics[[i]] %>% paste(collapse = " ")
+  }
+  
   return(Lyrics)
 }
