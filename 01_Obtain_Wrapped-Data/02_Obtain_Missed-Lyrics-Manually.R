@@ -108,6 +108,10 @@ manual_lyrics$Lyrics[which(manual_lyrics$Song=="10 d E A T h b R E a s T ⚄ ⚄
 # Joining all the lyrical data  -------------------------------------------
 #Songs I got in the above process
 retrieved <- bind_rows(captured_tough_songs,manual_lyrics) %>% select(-song2)
+for (i in 1:nrow(retrieved)) {
+  retrieved$full_lyrics[i] <- retrieved$Lyrics[[i]] %>% paste(collapse = " ")
+}
+
 
 #Dropping from my lyrics object the rows for the songs I just got (which are NA's in the Lyrics object for the lyrics column right now)
 Got_Lyrics <- Lyrics %>% anti_join(retrieved, by="Id")
