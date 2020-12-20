@@ -123,12 +123,16 @@ Artists$Playlist <- factor(Artists$Playlist,
 p1+p2 + plot_layout(ncol=1)
 
 
-# Top Words ---------------------------------------------------------------
 # Lyric Analysis ----------------------------------------------------------
 Lyrics <- data %>% select(Playlist,Id,Song,full_lyrics)
 
 words <- Lyrics %>% 
-  unnest_tokens(input = full_lyrics,output = "words",token="words")
+  unnest_tokens(input = full_lyrics,output = "words",token="words",to_lower = F) %>% 
+  filter(words!="NA") %>%  #Removing "NA" from the lyrics. This is an artifact of the genius API, which sometimes has the first line as missing
+  mutate(words= tolower(words))
+
+# Top Clean Words ---------------------------------------------------------------
+
 interesting_words <- words %>% 
   #Removing stop words
   anti_join(stop_words, by=c("words"="word")) %>% 
@@ -167,6 +171,45 @@ ggplot(top_5_words, aes(words, n, fill = Playlist)) +
         plot.title.position = "plot",
         axis.text.y = element_text(face="bold"))
 
+# Top Explicit Words ---------------------------------------------------------------
+interesting_words_explicit <- words %>% 
+  #Removing stop words
+  anti_join(stop_words, by=c("words"="word")) %>% 
+  #Removing more stop words
+  filter(!(words %in% c("ya","yea","yeah","oh","ohh","ooh","ay","ayy","uh","gon"))) 
+
+top_5_words_explicit <- interesting_words_explicit %>% 
+  count(Playlist,words) %>% 
+  arrange(desc(n)) %>% 
+  group_by(Playlist) %>% 
+  mutate(total=sum(n),
+         percent=(n/total)*100) %>% 
+  top_n(5, percent) %>% 
+  mutate(words_clean=toTitleCase(words),
+         words_clean=case_when(
+           words %in% lexicon::profanity_racist~str_replace_all(string = words_clean,pattern = "A|a|e|i|o|u",replacement = "*"),
+           words %in% lexicon::profanity_alvarez~str_replace_all(string = words_clean,pattern = "A|a|e|i|o|u",replacement = "*"),
+    TRUE~words_clean)) %>%
+  mutate(words_clean=reorder_within(x = words_clean,within = Playlist,by = percent))
+
+top_5_words_explicit$Playlist <- factor(top_5_words_explicit$Playlist,
+                               levels=c("Your Top Songs 2017","Your Top Songs 2018","Your Top Songs 2019","Your Top Songs 2020"),
+                               labels=c("2017","2018","2019","2020"))
+
+
+ggplot(top_5_words_explicit, aes(words_clean, percent, fill = Playlist)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "percent") +
+  facet_wrap(~Playlist, ncol = 2, scales = "free_y") +
+  scale_y_continuous(expand = c(0,0)) +
+  coord_flip() +
+  scale_x_reordered() +
+  scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
+  labs(title="Top Words by Year",
+       y="Percent") +
+  theme(plot.title = element_text(size = rel(2)),
+        plot.title.position = "plot",
+        axis.text.y = element_text(face="bold"))
 
 # Percent of Explicit Words -----------------------------------------------
 words %>% 
