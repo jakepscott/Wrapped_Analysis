@@ -20,7 +20,7 @@ theme_set(theme_minimal(base_size = 12))
 
 # Features ----------------------------------------------------------------
 comparison_data %>% 
-  select(Playlist,`Median Danceability`:`Median Years Since Release (Adj)`,`Total Words`,`Percent of Songs That Are Explicit`) %>% 
+  select(Playlist,`Median Danceability`:`Median Years Since Release (Adj)`,`Average Words Per Song`,`Percent of Songs That Are Explicit`) %>% 
   select(-`Median Key (0 is C)`) %>% 
   pivot_longer(`Median Danceability`:`Percent of Songs That Are Explicit`,names_to="Feature") %>% 
   ggplot(aes(x=Playlist,y=value,group=1)) +
@@ -69,24 +69,9 @@ sentiments %>%
         strip.text = element_text(size=rel(1.5)))
 
 # Overall Sentiment -------------------------------------------------
-afinn <- read_rds(here("01_Obtain_Wrapped-Data/data/afinn_data.rds"))
-negate_words <- c("not","no","never","won't","don't","can't")
-
-corrected_overall_sentiment <- data %>% 
-  select(Playlist,Song,full_lyrics) %>% 
-  unnest_tokens(input = full_lyrics,output = "word",token="words") %>% 
-  filter(word %in% c(afinn$word,negate_words)) %>%
-  left_join(afinn) %>% 
-  mutate(corrected_value=case_when(
-    (Playlist==lag(Playlist) & Song==lag(Song) & lag(word) %in% negate_words)~value*-1,
-    TRUE~value
-  )) %>% 
-  group_by(Playlist) %>% 
-  summarise(Corrected_Sentiment=mean(corrected_value,na.rm = T),
-            Uncorrected_Sentiment=mean(value,na.rm = T))
-
-corrected_overall_sentiment %>% 
-  pivot_longer(cols = Corrected_Sentiment:Uncorrected_Sentiment,names_to="correct",values_to="sentiment") %>% 
+comparison_data %>% 
+  select(Playlist, `Average Overall Sentiment`,`Average Corrected Sentiment`) %>% 
+  pivot_longer(cols = `Average Overall Sentiment`:`Average Corrected Sentiment`,names_to="correct",values_to="sentiment") %>% 
   ggplot(aes(x=Playlist,y=sentiment,color=correct,group=correct)) +
   geom_line(size=1.5) +
   geom_point(size=5) +
@@ -117,7 +102,7 @@ Artists$Playlist <- factor(Artists$Playlist,
     scale_x_reordered() +
     scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
     labs(title="Top Artists by Year",
-         y="Count") +
+         y="Songs") +
     theme(plot.title = element_text(size = rel(2)),
           plot.title.position = "plot",
           axis.text.y = element_text(face="bold")))
