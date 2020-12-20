@@ -5,15 +5,10 @@ library(readr)
 library(furrr)
 library(here)
 
-Lyrics <- read_rds(here("01_Obtain_Wrapped-Data/data/Full_Wrapped_Lyrics.rds"))
-
-
-
-# Getting Sentiment Data --------------------------------------------------
+# Getting Sentiment Data and Negation Words --------------------------------------------------
 nrc_data <- read_rds(here("01_Obtain_Wrapped-Data/data/nrc_data.rds"))
 afinn_data <- read_rds(here("01_Obtain_Wrapped-Data/data/afinn_data.rds"))
 negate_words <- c("not","no","never","won't","don't","can't")
-
 
 Lyric_Analysis_Function <- function(Lyrics){
   
