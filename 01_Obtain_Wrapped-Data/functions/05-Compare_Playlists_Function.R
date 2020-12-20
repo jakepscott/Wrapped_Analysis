@@ -1,6 +1,9 @@
 library(tidyverse)
 library(readr)
 library(lubridate)
+library(stringr)
+library(tools)
+
 Playlist_Comparison_Function <- function(data,wrapped=0) {
   #Getting something to combine all the feature summaries to
   Playlist_Data <- data %>% group_by(Playlist) %>% summarise(`Number of Songs`=n())
@@ -132,22 +135,25 @@ Playlist_Comparison_Function <- function(data,wrapped=0) {
     
   }
   
-  if ("Total Words" %in% colnames(data)) {
+  if ("total_words" %in% colnames(data)) {
     Total_Words_and_Overall_Sentiment <- data %>% 
-      select(Playlist, `Total Words`,`Overall Sentiment`) %>% 
+      select(Playlist, total_words,overall_sentiment,overall_sentiment_corrected) %>% 
       group_by(Playlist) %>% 
-      summarise(`Total Words`=sum(`Total Words`,na.rm = T),
-                `Average Overall Sentiment`=median(`Overall Sentiment`,na.rm = T))
+      summarise(`Total Words` = sum(total_words,na.rm = T),
+                `Average Words Per Song` = median(total_words,na.rm = T),
+                `Average Overall Sentiment` = median(overall_sentiment,na.rm = T),
+                `Average Corrected Sentiment`= median(overall_sentiment_corrected,na.rm = T))
     
     Emotion_Words <- data %>% 
-      select(Playlist,contains("Number of")) %>% 
+      select(Playlist,trust:anticipation) %>% 
       group_by(Playlist) %>% 
       summarise(across(where(is.double),sum,na.rm=T)) 
     
     Words <- left_join(Emotion_Words,Total_Words_and_Overall_Sentiment)
-    Words <- Words %>% mutate(across(`Number of Trust Words`:`Number of Anticipation Words`,~./`Total Words`*100))
-    colnames(Words) <- Words %>% colnames() %>% str_replace("Words", "Category") %>% str_replace("Number of","Percent of Words in")
-    Words <- Words %>% rename("Total Words"=`Total Category`)
+    Words <- Words %>% mutate(across(trust:anticipation,~./`Total Words`*100))
+    Words <- Words %>% 
+      rename_at(vars(trust:anticipation),toTitleCase) %>% 
+      rename_at(vars(Trust:Anticipation),~paste("Percent of Words in",.,"Category"))
     Playlist_Data <- left_join(Playlist_Data,Words)
   }
   
