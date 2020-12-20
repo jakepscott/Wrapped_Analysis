@@ -23,8 +23,6 @@ source(here("01_Obtain_Wrapped-Data/functions/04-Analyze_Lyrics_Function.R"))
 source(here("01_Obtain_Wrapped-Data/functions/05-Compare_Playlists_Function.R"))
 
 
-
-
 # Getting User Wrapped Playlists ------------------------------------------
 user_playlists <- getPlaylists("jakerocksalot",token = keys) %>% as_tibble() %>% filter(tracks>0 & str_detect(name,"Your Top Songs")==T)
 
@@ -52,19 +50,11 @@ source(here("01_Obtain_Wrapped-Data/02_Obtain_Missed-Lyrics-Manually.R"))
 
 # Getting Lyric Features for Wrapped Songs --------------------------------
 Lyric_Features <- Lyric_Analysis_Function(Full_Lyrics) %>% select(-Lyrics)
-
-
-# Getting unnested lyrics column ------------------------------------------
-Lyrics_Column <- Lyrics %>% select(Id,Lyrics) %>% mutate(full_lyrics="a")
-
-for (i in 1:nrow(Lyrics)) {
-  Lyrics_Column$full_lyrics[i] <- Lyrics_Column$Lyrics[[i]] %>% paste(collapse = " ")
-}
-
+Lyric_Features_To_Join <- Lyric_Features %>% select(!c(Song,Artist,Album))
 
 
 # Joining the Data All Together -------------------------------------------
-Full_Wrapped_Feat_Lyrics_Data <- Features %>% left_join(Lyrics) %>% left_join(Lyric_Features) %>% left_join(Lyrics_Column) %>% distinct()
+Full_Wrapped_Feat_Lyrics_Data <- Features %>% left_join(Lyric_Features_To_Join) %>% distinct(Id,.keep_all = T)
 #saveRDS(Full_Wrapped_Feat_Lyrics_Data,here("data/Full_Wrapped_Feat_Lyrics_Data.rds"))
 #saveRDS(Full_Wrapped_Feat_Lyrics_Data,here("01_Obtain_Wrapped-Data/data/Full_Wrapped_Feat_Lyrics_Data.rds"))
 
