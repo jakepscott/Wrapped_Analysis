@@ -2,7 +2,6 @@
 library(tidyverse)
 library(readr)
 library(tidytext)
-library(ggimage)
 
 #Load Data
 data <- read_rds(here("01_Obtain_Wrapped-Data/data/Full_Wrapped_Feat_Lyrics_Data.rds"))

@@ -11,9 +11,7 @@ Features_Function <- function(track_data, features=
     return("Sorry, no tracks in this input!")
   }
   
-  #This spreads the playlist column so that if a song appears in two playlists, it only has one row and thus I get the features
-  #for it only once. This saves time. Later I will use pivot_longer to get the playlist column back, which I can use with
-  #group_by()
+  #Get distinct tracks so I only run things for each song once
   tracks_distinct <- track_data %>% 
     distinct(Id,.keep_all = T) 
   

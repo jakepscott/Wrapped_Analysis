@@ -11,6 +11,10 @@ Lyrics <- read_rds(here("01_Obtain_Wrapped-Data/data/Full_Wrapped_Lyrics.rds"))
 
 # Getting Sentiment Data --------------------------------------------------
 nrc_data <- read_rds(here("01_Obtain_Wrapped-Data/data/nrc_data.rds"))
+afinn_data <- read_rds(here("01_Obtain_Wrapped-Data/data/afinn_data.rds"))
+negate_words <- c("not","no","never","won't","don't","can't")
+
+
 Lyric_Analysis_Function <- function(Lyrics){
   
   #only works if there is at least 1 song in the track_data object
@@ -58,23 +62,57 @@ Lyric_Analysis_Function <- function(Lyrics){
     
   }
   
-  
-  
   # Use Functions -----------------------------------------------------------
   plan(multiprocess)
   
-  #Calculating and saving outside percent
-  tictoc::tic()
+  #Total words
   data <- Lyrics %>% 
     mutate(total_words = future_pmap_dbl(list(full_lyrics=full_lyrics), ~Num_Words(..1),.progress = T)) 
-  tictoc::toc()
-  
-  #Calculating and saving outside percent
-  tictoc::tic()
+
+  #NRC Sentiments 
   data <- data %>% 
     mutate(features = future_pmap(list(full_lyrics=full_lyrics,total_words=total_words), ~Sentiment_Function(..1,..2),.progress = T)) 
-  tictoc::toc()
-  
+
   data <- data %>% unnest(features)
+  
+
+# Overall Senitment -------------------------------------------------------
+#Make function for uncorrected
+  Overall_Sentiment_Function <- function(full_lyrics) {
+    full_lyrics %>% 
+      tibble(word=.) %>% 
+      unnest_tokens(output = "word",input = "word",token = "words") %>% 
+      inner_join(., afinn_data, by="word")  %>% 
+      pull(value) %>% 
+      mean(na.rm=T)
+  }
+  
+  Overall_Sentiment <- data %>% 
+    select(Id,full_lyrics) %>% 
+    mutate(overall_sentiment = future_pmap_dbl(list(full_lyrics=full_lyrics), ~Overall_Sentiment_Function(..1),.progress = T))
+  
+  data <- data %>% left_join(Overall_Sentiment)
+  
+  #Making function for corrected sentiment
+  Corrected_Sentiment_Function <- function(full_lyrics) {
+    full_lyrics %>% 
+      tibble(word=.) %>% 
+      unnest_tokens(input = "word",output = "word",token="words") %>% 
+      filter(word %in% c(afinn_data$word,negate_words)) %>%
+      left_join(afinn_data) %>% 
+      mutate(corrected_value=case_when(
+        (lag(word) %in% negate_words)~value*-1,
+        TRUE~value
+      )) %>% 
+      pull(corrected_value) %>% 
+      mean(na.rm=T)
+  }
+  
+  Corrected_Sentiment <- data %>% 
+    select(Id,full_lyrics) %>% 
+    mutate(overall_sentiment_corrected = future_pmap_dbl(list(full_lyrics=full_lyrics), ~Corrected_Sentiment_Function(..1),.progress = T))
+  
+  data <- data %>% left_join(Corrected_Sentiment)
+  
   return(data)
 }
