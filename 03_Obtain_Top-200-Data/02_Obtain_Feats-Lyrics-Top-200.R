@@ -42,13 +42,7 @@ Features <- Features_Function(track_data = data)
 # Get Lyrics and Lyric Features --------------------------------------------------------------
 #Raw features
 Lyrics <- Lyric_Generation_Function(Need_Lyrics)
-#saveRDS(Lyrics,here("03_Obtain_Top-200-Data/data_new/Top200_Lyrics.rds"))
-
-
-#Getting features of the lyrics
-Lyric_Features <- Lyric_Analysis_Function(Lyrics) %>% select(-Lyrics)
-Lyric_Features <- Lyric_Features %>% distinct()
-#saveRDS(Lyric_Features,here("03_Obtain_Top-200-Data/data_new/Top200_Lyric_Features.rds"))
+#saveRDS(Lyrics,here("03_Obtain_Top-200-Data/data/Top200_Lyrics.rds"))
 
 #Getting a full lyrics column
 Lyrics_Column <- Lyrics %>% select(Id,Lyrics) %>% mutate(full_lyrics="a")
@@ -57,9 +51,19 @@ for (i in 1:nrow(Lyrics)) {
   Lyrics_Column$full_lyrics[i] <- Lyrics_Column$Lyrics[[i]] %>% paste(collapse = " ")
 }
 
+Lyrics <- Lyrics %>% left_join(Lyrics_Column)
+
+
+
+#Getting features of the lyrics
+Lyric_Features <- Lyric_Analysis_Function(Lyrics) %>% select(-Lyrics)
+#saveRDS(Lyric_Features,here("03_Obtain_Top-200-Data/data/Top200_Lyric_Features.rds"))
+
+
+
 
 #Joining
-Full_Data <-  all_songs %>% left_join(Features) %>% left_join(Lyrics) %>% left_join(Lyric_Features) %>% left_join(Lyrics_Column)
+Full_Data <-  all_songs %>% left_join(Features) %>% left_join(Lyrics) %>% left_join(Lyric_Features)
 
 #saveRDS(Full_Data,here("03_Obtain_Top-200-Data/data/Full_Top_200_Feat_Lyrics_Data.rds"))
 #saveRDS(Full_Data,here("data/Full_Top_200_Feat_Lyrics_Data.rds"))
