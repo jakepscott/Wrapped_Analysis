@@ -15,7 +15,7 @@ Lyrics <- data %>% select(Playlist,Id,Song,full_lyrics)
 words <- Lyrics %>% 
   unnest_tokens(input = full_lyrics,output = "words",token="words")
 
-#Getting ride of profane and inappropriate words
+#Getting rid of profane and inappropriate words
 interesting_words <- words %>% 
   filter(!is.na(words)) %>% 
   rename("word"=words) %>% 
@@ -27,7 +27,7 @@ interesting_words <- words %>%
   #Removing more stop words
   filter(!(word %in% c("ya","yea","yeah","oh","ohh","ooh","ay","ayy","uh","gon"))) #Could also remove ("ah","em","nah","na","yah")
 
-#Getting the sum of the playlist-word pairs. That way I can just sum rather than use nrow in the function.
+#Getting the sum of the playlist-word pairs. That way I can just sum rather than use nrow in the function below.
 playlist_word_sums <- interesting_words %>% count(Playlist,word)
 
 

@@ -237,15 +237,21 @@ Top_10_Relative_Importance <- Relative_Importance %>%
   distinct() %>% 
   group_by(Playlist) %>% 
   top_n(5, difference) %>%
-  mutate(word=str_to_title(word)) %>% 
-  mutate(word=reorder_within(x = word,within = Playlist,by = difference))  
+  mutate(word_clean=toTitleCase(word),
+         word_clean=case_when(
+           word %in% lexicon::profanity_racist~str_replace_all(string = word_clean,pattern = "A|a|e|i|o|u",replacement = "*"),
+           word %in% lexicon::profanity_alvarez~str_replace_all(string = word_clean,pattern = "A|a|e|i|o|u",replacement = "*"),
+           TRUE~word_clean)) %>%
+  mutate(word_clean=reorder_within(x = word_clean,within = Playlist,by = difference))
+
+
 
 Top_10_Relative_Importance$Playlist <- factor(Top_10_Relative_Importance$Playlist,
                                               levels=c("Your Top Songs 2017","Your Top Songs 2018","Your Top Songs 2019","Your Top Songs 2020"),
                                               labels=c("2017","2018","2019","2020"))
 
 Top_10_Relative_Importance %>%
-  ggplot(aes(word, difference, fill = Playlist)) +
+  ggplot(aes(word_clean, difference, fill = Playlist)) +
   geom_col(show.legend = FALSE) +
   labs(x = NULL, y = "count") +
   facet_wrap(~Playlist, ncol = 2, scales = "free_y") +

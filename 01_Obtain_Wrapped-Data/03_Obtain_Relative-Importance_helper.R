@@ -2,61 +2,63 @@
 library(tidyverse)
 library(readr)
 library(tidytext)
+library(furrr)
 
-#Load Data
+#This is the full features and lyrics data
 data <- read_rds(here("01_Obtain_Wrapped-Data/data/Full_Wrapped_Feat_Lyrics_Data.rds"))
 
+#Just keep columns I need
 Lyrics <- data %>% select(Playlist,Id,Song,full_lyrics)
 
+#Get a row for every word in the data (so now I have playlist-word pairs)
 words <- Lyrics %>% 
-  unnest_tokens(input = full_lyrics,output = "words",token="words")
-
-interesting_words <- words %>% 
-  rename("word"=words) %>% 
+  unnest_tokens(input = full_lyrics,output = "word",token="words") %>% 
   #Removing stop words
   anti_join(stop_words) %>% 
-  #Removing racist and profane words
-  anti_join(tibble(word=lexicon::profanity_racist)) %>% 
-  anti_join(tibble(word=lexicon::profanity_alvarez)) %>% 
   #Removing more stop words
-  filter(!(word %in% c("ya","yea","yeah","oh","ohh","ooh","ay","ayy","uh","gon"))) 
+  filter(!(word %in% c("ya","yea","yeah","oh","ohh","ooh","ay","ayy","uh","gon"))) #Could also remove ("ah","em","nah","na","yah")
 
+#Getting the sum of the playlist-word pairs. That way I can just sum rather than use nrow in the function below
+playlist_word_sums <- words %>% count(Playlist,word)
 
-# Getting Outside Proportion ----------------------------------------------
-#First I make an empty tibble which will eventually contain the album, word, and proportion
-#of all words made up by that word outside the given album. So if the album is Your Top Songs 2020 and the word
-#is run, the percent_outside column will be the proportion of words outside Your Top Songs 2020 that are "run"
-outside_values <- tibble(Playlist=character(0),word=character(0),percent_outside=double(0))
-tictoc::tic()
-for (i in unique(data$Playlist)) {
-  print(i)
-  for (z in interesting_words %>% filter(Playlist==i) %>% distinct(word) %>% pull(word)) {
-    #Get the number of words outside the album
-    total_outside_words <- interesting_words %>% 
-      filter(Playlist!=i) %>% 
-      #distinct(words) %>% 
-      nrow() 
-    #Get the number of times the given word appears outside the given album
-    total_word_of_interest_outside <- interesting_words %>% 
-      filter(Playlist!=i,
-             word==z) %>% 
-      nrow()
-    #Make the proportion
-    percent_outside_to_paste <- (total_word_of_interest_outside/total_outside_words)*100
-    #Make into a tibble
-    to_bind <- tibble(Playlist=i,word=z,percent_outside=percent_outside_to_paste)
-    #Bind onto a big tibble which will have each album-word pair and the corresponding percent_outside column
-    outside_values <- outside_values %>% bind_rows(to_bind)
-  }
+#Getting just distinct playlist-word pairs
+distinct_words <- words %>% distinct(Playlist,word)
+
+# Function to Calculate Outside Percent -----------------------------------
+calc_percent_outside <- function(playlist, curr_word) {
+  #Get the number of words outside the album
+  total_outside_words <- playlist_word_sums %>%  #*******NOTE: Sadly, this "playlist_word_sums" is something I need to define in the environment:(, see above
+    filter(Playlist != playlist) %>% 
+    pull(n) %>% 
+    sum()
+  
+  #Get the number of times the given word appears outside the given album
+  total_word_of_interest_outside <- playlist_word_sums %>% 
+    filter(Playlist!=playlist,
+           word==curr_word) %>% 
+    pull(n) %>% 
+    sum()
+  
+  prop <- (total_word_of_interest_outside/total_outside_words)*100
+  return(prop)
 }
-tictoc::toc()
-#Join the outside_values tibble to the RTJ_lyrics tibble, so for each word with will now have the value
-#for the proportion of words outside the given album are made up by that given word. So if the album is
-#RTJ4 and the word is week, the percent_outside column, which is .029, means that week makes up .029% of words in 
-#RTJ1,RTJ2,and RTJ3
-Relative_Importance <- interesting_words %>% 
-  left_join(outside_values,by=c("Playlist","word"))
 
+
+# Calculating Outside Percent ---------------------------------------------
+#This sets a plan for furrr
+plan(multiprocess)
+
+#Calculating and saving outside percent
+tictoc::tic()
+distinct_words_outside <- distinct_words %>% 
+  mutate(percent_outside = future_pmap_dbl(list(Playlist, word), ~calc_percent_outside(..1, ..2),.progress = T)) 
+tictoc::toc()
+
+#saveRDS(needed_outside,here("03_Obtain_Top-200-Data/data/full_outside_percent.rds"))
+
+#Joining this outside percent data with the full interesting words data
+Relative_Importance <- words %>% 
+  left_join(distinct_words_outside,by=c("Playlist","word"))
 
 # Getting Within Album Proportion -----------------------------------------
 Relative_Importance <- Relative_Importance %>% 
@@ -69,9 +71,14 @@ Relative_Importance <- Relative_Importance %>%
   mutate(percent_inside=(n/total_word)*100)
 
 
+
 # Getting Difference ------------------------------------------------------
 Relative_Importance <- Relative_Importance %>% mutate(difference=percent_inside-percent_outside)
 
+
+# Saving ------------------------------------------------------------------
+#Just keeping distinct playlist word pairs
+Relative_Importance <- Relative_Importance %>% select(Playlist,word,difference) %>% distinct()
 #Saving so I don't need to run the above for loop each time
 saveRDS(Relative_Importance,here("01_Obtain_Wrapped-Data/data/Relative_Importance.rds"))
 saveRDS(Relative_Importance,here("data/Relative_Importance.rds"))
