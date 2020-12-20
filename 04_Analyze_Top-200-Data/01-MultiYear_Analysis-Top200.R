@@ -20,7 +20,7 @@ theme_set(theme_minimal(base_size = 12))
 
 # Features ----------------------------------------------------------------
 comparison_data %>% 
-  select(Playlist,`Median Danceability`:`Median Years Since Release`,`Total Words`,`Percent of Songs That Are Explicit`) %>% 
+  select(Playlist,`Median Danceability`:`Median Years Since Release`,`Average Words Per Song`,`Percent of Songs That Are Explicit`) %>% 
   select(-`Median Key (0 is C)`) %>% 
   pivot_longer(`Median Danceability`:`Percent of Songs That Are Explicit`,names_to="Feature") %>% 
   ggplot(aes(x=Playlist,y=value,group=1)) +
@@ -69,33 +69,19 @@ sentiments %>%
         strip.text = element_text(size=rel(1.5)))
 
 # Overall Sentiment -------------------------------------------------
-afinn <- read_rds(here("01_Obtain_Wrapped-Data/data/afinn_data.rds"))
-negate_words <- c("not","no","never","won't","don't","can't")
-
-corrected_overall_sentiment <- data %>% 
-  select(Playlist,Song,full_lyrics) %>% 
-  unnest_tokens(input = full_lyrics,output = "word",token="words") %>% 
-  filter(word %in% c(afinn$word,negate_words),
-         !is.na(words)) %>%
-  left_join(afinn) %>% 
-  mutate(corrected_value=case_when(
-    (Playlist==lag(Playlist) & Song==lag(Song) & lag(word) %in% negate_words)~value*-1,
-    TRUE~value
-  )) %>% 
-  group_by(Playlist) %>% 
-  summarise(Corrected_Sentiment=mean(corrected_value,na.rm = T),
-            Uncorrected_Sentiment=mean(value,na.rm = T))
-
-corrected_overall_sentiment %>% 
-  pivot_longer(cols = Corrected_Sentiment:Uncorrected_Sentiment,names_to="correct",values_to="sentiment") %>% 
+comparison_data %>% 
+  select(Playlist, `Average Overall Sentiment`,`Average Corrected Sentiment`) %>% 
+  pivot_longer(cols = `Average Overall Sentiment`:`Average Corrected Sentiment`,names_to="correct",values_to="sentiment") %>% 
   ggplot(aes(x=Playlist,y=sentiment,color=correct,group=correct)) +
   geom_line(size=1.5) +
   geom_point(size=5) +
+  geom_hline(yintercept = 0,linetype="dashed") +
   scale_color_manual(values = c("#1DB954","#A9A9A9")) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   guides(color="none") +
   labs(title="<span style='color: #1DB954'>**Corrected**</span> versus <span style='color: #A9A9A9'>**Uncorrected**</span> Overall Sentiment",
        subtitle = "Corrected means I account for \"negation\" words like \"not\"") +
+  theme_minimal() +
   theme(plot.title=element_markdown(),
         axis.title.x = element_blank(),
         plot.title.position = "plot")
@@ -231,7 +217,7 @@ Top_10_Relative_Importance %>%
   scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
   labs(title="Most Uniquely Important Words for Each Year",
        subtitle = "Percent of words made up by word X in year Y minus percent of words made up of word X outside of year Y",
-       y="Proportional Importance") +
+       y="Proportional Importance (Percent)") +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(size = rel(2)),
         plot.title.position = "plot",

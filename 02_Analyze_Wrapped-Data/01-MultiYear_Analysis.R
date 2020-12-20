@@ -75,11 +75,13 @@ comparison_data %>%
   ggplot(aes(x=Playlist,y=sentiment,color=correct,group=correct)) +
   geom_line(size=1.5) +
   geom_point(size=5) +
+  geom_hline(yintercept = 0,linetype="dashed") +
   scale_color_manual(values = c("#1DB954","#A9A9A9")) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   guides(color="none") +
   labs(title="<span style='color: #1DB954'>**Corrected**</span> versus <span style='color: #A9A9A9'>**Uncorrected**</span> Overall Sentiment",
        subtitle = "Corrected means I account for \"negation\" words like \"not\"") +
+  theme_minimal() +
   theme(plot.title=element_markdown(),
         axis.title.x = element_blank(),
         plot.title.position = "plot")
@@ -261,7 +263,7 @@ Top_10_Relative_Importance %>%
   scale_fill_manual(values = c("#5BC680","#1DB954","#16873D","#1B3B26")) +
   labs(title="Most Uniquely Important Words for Each Year",
        subtitle = "Percent of words made up by word X in year Y minus percent of words made up of word X outside of year Y",
-       y="Proportional Importance") +
+       y="Proportional Importance (Percent)") +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(size = rel(2)),
         plot.title.position = "plot",
