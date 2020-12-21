@@ -13,17 +13,16 @@ Lyrics <- data %>% select(Playlist,Id,Song,full_lyrics)
 
 #Get a row for every word in the data (so now I have playlist-word pairs)
 words <- Lyrics %>% 
-  unnest_tokens(input = full_lyrics,output = "words",token="words")
+  unnest_tokens(input = full_lyrics,output = "words",token="words",to_lower = F) %>% 
+  filter(words!="NA") %>%  #Removing "NA" from the lyrics. This is an artifact of the genius API, which sometimes has the first line as missing
+  mutate(words= tolower(words))
 
 #Getting rid of profane and inappropriate words
 interesting_words <- words %>% 
   filter(!is.na(words)) %>% 
   rename("word"=words) %>% 
   #Removing stop words
-  anti_join(stop_words) %>% 
-  #Removing racist and profane words
-  anti_join(tibble(word=lexicon::profanity_racist)) %>% 
-  anti_join(tibble(word=lexicon::profanity_alvarez)) %>% 
+  anti_join(stop_words) %>%
   #Removing more stop words
   filter(!(word %in% c("ya","yea","yeah","oh","ohh","ooh","ay","ayy","uh","gon"))) #Could also remove ("ah","em","nah","na","yah")
 

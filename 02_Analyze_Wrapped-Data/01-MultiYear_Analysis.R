@@ -9,6 +9,7 @@ library(here)
 library(patchwork)
 library(stringr)
 library(scales)
+library(tools)
 
 data <- read_rds(here("data/Full_Wrapped_Feat_Lyrics_Data.rds"))
 comparison_data <- read_rds(here("data/Wrapped_Playlist_Data.rds"))
@@ -214,10 +215,13 @@ ggplot(top_5_words_explicit, aes(words_clean, percent, fill = Playlist)) +
         axis.text.y = element_text(face="bold"))
 
 # Percent of Explicit Words -----------------------------------------------
-words %>% 
+
+Per_Explicit_Words <- words %>% 
   mutate(explicit=ifelse(words %in% lexicon::profanity_racist | words %in% lexicon::profanity_alvarez,1,0)) %>% 
   group_by(Playlist) %>% 
-  summarise(Percent_Explicit=mean(explicit,na.rm = T)) %>% 
+  summarise(Percent_Explicit=mean(explicit,na.rm = T)) 
+
+Per_Explicit_Words %>% 
   ggplot(aes(x=Playlist,y=Percent_Explicit,group=1)) +
   geom_line(color="#1DB954",size=1.5) +
   geom_point(color="#1DB954",size=5) +
@@ -234,6 +238,7 @@ words %>%
 # Most Unique Words -------------------------------------------------------
 #source(here("Analysis/Getting_Relative_Importance.R"))
 Relative_Importance <- read_rds(here("data/Relative_Importance.rds"))
+
 Top_10_Relative_Importance <- Relative_Importance %>% 
   select(Playlist,word,difference) %>%
   distinct() %>% 
