@@ -6,7 +6,6 @@ library(stringr)
 library(tools)
 library(spatstat)
 library(stats)
-library(MCDA)
 
 Weighted_Playlist_Comparison_Function <- function(data,wrapped=0) {
   #Getting something to combine all the feature summaries to
