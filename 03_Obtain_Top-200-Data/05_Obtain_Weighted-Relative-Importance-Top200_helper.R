@@ -8,9 +8,18 @@ library(furrr)
 #This is the full features and lyrics data
 data <- read_rds(here("03_Obtain_Top-200-Data/data/Full_Top_200_Feat_Lyrics_Data.rds"))
 
-#Just keep columns I need
-Lyrics <- data %>% select(Playlist,Id,Song,full_lyrics)
+#Getting Streams column
+Jan_2017_Dec_2020 <- read_rds(here("03_Obtain_Top-200-Data/data/Jan_2017_Dec_2020.rds"))
+streams <- Jan_2017_Dec_2020 %>% select(date,"Id"=URI,Streams) %>% distinct()
+data <- data %>% left_join(streams)
+data <- data %>% mutate(Streams=as.numeric(Streams))
 
+rm(Jan_2017_Dec_2020)
+rm(streams)
+
+#Just keep columns I need
+Lyrics <- data %>% select(Playlist,Id,Song,Streams,full_lyrics)
+rm(data)
 #Get a row for every word in the data (so now I have playlist-word pairs)
 words <- Lyrics %>% 
   unnest_tokens(input = full_lyrics,output = "words",token="words",to_lower = F) %>% 
@@ -27,7 +36,7 @@ interesting_words <- words %>%
   filter(!(word %in% c("ya","yea","yeah","oh","ohh","ooh","ay","ayy","uh","gon"))) #Could also remove ("ah","em","nah","na","yah")
 
 #Getting the sum of the playlist-word pairs. That way I can just sum rather than use nrow in the function below.
-playlist_word_sums <- interesting_words %>% count(Playlist,word)
+playlist_word_sums <- interesting_words %>% count(Playlist,word,wt=Streams)
 
 
 #Getting just distinct playlist-word pairs
@@ -65,7 +74,7 @@ distinct_words_outside <- distinct_words %>%
   mutate(percent_outside = future_pmap_dbl(list(Playlist, word), ~calc_percent_outside(..1, ..2),.progress = T)) 
 tictoc::toc()
 
-#saveRDS(needed_outside,here("03_Obtain_Top-200-Data/data/full_outside_percent.rds"))
+#saveRDS(distinct_words_outside,here("03_Obtain_Top-200-Data/data/weighted_full_outside_percent.rds"))
 
 #Joining this outside percent data with the full interesting words data
 Relative_Importance <- interesting_words %>% 
@@ -74,10 +83,10 @@ Relative_Importance <- interesting_words %>%
 # Getting Within Album Proportion -----------------------------------------
 Relative_Importance <- Relative_Importance %>% 
   group_by(Playlist,word) %>% 
-  mutate(n=n()) %>% 
+  mutate(n=sum(Streams)) %>% 
   ungroup() %>% 
   group_by(Playlist) %>% 
-  mutate(total_word=n()) %>% 
+  mutate(total_word=sum(Streams)) %>% 
   ungroup() %>%
   mutate(percent_inside=(n/total_word)*100)
 
@@ -93,7 +102,7 @@ Relative_Importance <- Relative_Importance %>% select(Playlist,word,difference) 
 
 
 #Saving so I don't need to run the above for loop each time
-saveRDS(Relative_Importance,here("03_Obtain_Top-200-Data/data/Top200_Relative_Importance.rds"))
-saveRDS(Relative_Importance,here("data/Top200_Relative_Importance.rds"))
+saveRDS(Relative_Importance,here("03_Obtain_Top-200-Data/data/Weighted_Top200_Relative_Importance.rds"))
+saveRDS(Relative_Importance,here("data/Weighted_Top200_Relative_Importance.rds"))
 
 
