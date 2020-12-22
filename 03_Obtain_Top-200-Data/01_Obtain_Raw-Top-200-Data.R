@@ -9,7 +9,6 @@ library(here)
 ##
 # Setting Up Dates --------------------------------------------------------
 ##
-#2020-05-03 is the last day for which I had data before running this, hence why it is from
 dates <- seq.Date(from = as_date("2017-01-01"),to = as_date("2020-12-05")-1, by = "day") %>% tibble("date"=.) %>% mutate(date=as.character(date))
 
 ##
