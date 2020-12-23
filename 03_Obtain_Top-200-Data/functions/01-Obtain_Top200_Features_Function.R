@@ -91,23 +91,24 @@ Features_Function <- function(track_data, features=
       }, error=function(e){})
     }
     
-    Album_info <- Album_info %>% rename("Album_id"=id, `Album Release Date`=release_date) %>% 
-      dplyr::select(Album_id,`Album Release Date`)
+    Album_info <- Album_info %>% rename("Album_id"=id, `Album Release Date`=release_date,"Album_Name"=name) %>% 
+      dplyr::select(Album_id,`Album Release Date`,Album_Name)
     
     #Fixing the album release date.
     #Some release dates are just a year, using nchar I find these, and correct them by just 2020-01-01, for example
-    fixed_rds <- as_tibble(Album_info) %>% select(`Album Release Date`) %>% distinct() %>%
+    fixed_rds <- as_tibble(Album_info) %>% 
+      distinct() %>%
       mutate(`Album Release Date`=as.character(`Album Release Date`), nchar=nchar(`Album Release Date`)) %>% 
       mutate(album_rd_correct=case_when(nchar==10~`Album Release Date`,
                                         nchar==7~paste(`Album Release Date`, "01", sep = "-"),
                                         nchar==4~paste(`Album Release Date`,"01","01",sep = "-"))) %>% 
       select(-nchar) %>% 
       mutate(`Days Since Release`=as.numeric(Sys.Date()-as.Date(album_rd_correct)),
-             `Years Since Release`=as.numeric(round(`Days Since Release`/365,digits = 2))) %>% 
+             `Years Since Release`=as.numeric((`Days Since Release`/365))) %>% 
       select(-album_rd_correct,
              -`Days Since Release`) 
     
-    Album_info <- left_join(Album_info,fixed_rds) %>% as_tibble() %>% select(-`Album Release Date`)
+    Album_info <- left_join(Album_info,fixed_rds) %>% as_tibble() 
     track_data <- left_join(track_data,Album_info) 
     cat("\nGot Release Dates!\n")
   }
@@ -144,11 +145,6 @@ Features_Function <- function(track_data, features=
   # Joining with Gender of Artist -------------------------------------------
   genders <- read_rds(here("03_Obtain_Top-200-Data/data/artist_genders.rds")) %>% rename("Artist"=artist,`Artist Gender`=genders)
   track_data <- left_join(track_data,genders)
-  
-  
-  # Removing IDs ------------------------------------------------------------
-  
-  track_data <- track_data %>% select(-c(Album_id,Artist_id))   
   
   return(track_data)
 }
