@@ -34,8 +34,11 @@ data <- all_songs %>%
   distinct(Id,.keep_all = T)
 
 
-# Get Features (Unnecessary Here, already have them) -----------------------------------------
-Features <- Features_Function(track_data = data)
+# Get Features  -----------------------------------------
+Features_With_Ids <- Features_Function(track_data = data) #Keep artist and Album IDs in case I want to do further analysis
+Features <- Features_With_Ids %>% select(-Album_id,-Artist_id)
+
+#saveRDS(Features_With_Ids,here("03_Obtain_Top-200-Data/data/Top200_Features_with_Ids.rds"))
 #saveRDS(Features,here("03_Obtain_Top-200-Data/data/Top200_Features.rds"))
 
 
