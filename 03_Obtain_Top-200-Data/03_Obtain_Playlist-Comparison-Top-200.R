@@ -45,7 +45,9 @@ Adj_Release_Dates_Grouped <- Adj_Release_Dates %>%
   group_by(Playlist) %>% 
   summarise(`Median Days Since Release (Adj)`=median(`Days Since Release (Adj)`,na.rm = T)) 
 
-comparison_data <- comparison_data %>% left_join(Adj_Release_Dates_Grouped)
+comparison_data <- comparison_data %>% 
+  left_join(Adj_Release_Dates_Grouped) %>%
+  mutate(`Median Days Since Release (Adj)`=as.double(`Median Days Since Release (Adj)`))
 
 #saveRDS(comparison_data,here("03_Obtain_Top-200-Data/data/Top200_Playlist_Data.rds"))
 #saveRDS(comparison_data,here("data/Top200_Playlist_Data.rds"))

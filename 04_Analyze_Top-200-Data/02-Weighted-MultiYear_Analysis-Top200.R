@@ -39,7 +39,11 @@ theme_set(theme_minimal(base_size = 12))
 
 # Features ----------------------------------------------------------------
 comparison_data %>% 
-  select(weighted,Playlist,`Median Danceability`:`Median Years Since Release`,`Average Words Per Song`,`Percent of Songs That Are Explicit`) %>% 
+  select(weighted,Playlist,`Median Danceability`:`Median Years Since Release`,
+         `Average Words Per Song`,
+         `Percent of Songs That Are Explicit`,
+         -`Median Years Since Release`,
+         `Median Days Since Release (Adj)`) %>% 
   select(-`Median Key (0 is C)`) %>% 
   pivot_longer(`Median Danceability`:`Percent of Songs That Are Explicit`,names_to="Feature") %>% 
   ggplot(aes(x=Playlist,y=value)) +
