@@ -25,7 +25,8 @@ Comparison_Wrapped <- Comparison_Wrapped %>% rename("Median Loudness (dB)"=`Medi
                                               "Median Tempo (BPM)"=`Median Tempo`,
                                               "Percent of Songs That Are Explicit"=`Percent Explicit`) %>% 
   mutate(Wrapped="Yes",
-         Playlist=case_when(Playlist=="Your Top Songs 2017"~"2017",
+         Playlist=case_when(Playlist=="Your Top Songs 2016"~"2016",
+                            Playlist=="Your Top Songs 2017"~"2017",
                             Playlist=="Your Top Songs 2018"~"2018",
                             Playlist=="Your Top Songs 2019"~"2019",
                             Playlist=="Your Top Songs 2020"~"2020"))
@@ -181,7 +182,6 @@ p1+p2 + plot_layout(ncol=1)
 
 
 # Lyric Analysis ----------------------------------------------------------
-
 # Top Clean Words ---------------------------------------------------------------
 
 Lyrics <- data %>% select(Playlist,Streams,Id,Song,full_lyrics)
