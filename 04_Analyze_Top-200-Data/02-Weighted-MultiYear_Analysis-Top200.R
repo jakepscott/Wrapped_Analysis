@@ -264,6 +264,12 @@ Per_Explicit_Words <- words %>%
   summarise(Weighted_Percent_Explicit=weighted.mean(explicit,na.rm = T,w=Streams),
             Unweighted_Percent_Explicit=mean(explicit,na.rm=T))
 
+#Save this for the comparison to wrapped data
+#Per_Explicit_Words <- Per_Explicit_Words %>% select(-Unweighted_Percent_Explicit)
+# saveRDS(Per_Explicit_Words,here("04_Analyze_Top-200-Data/data/Per_Explicit_Words_Top200.rds"))
+# saveRDS(Per_Explicit_Words,here("data/Per_Explicit_Words_Top200.rds"))
+
+
 Per_Explicit_Words %>% 
   pivot_longer(Weighted_Percent_Explicit:Unweighted_Percent_Explicit,names_to="Weighted",values_to="Percent_Explicit") %>% 
   ggplot(aes(x=Playlist,y=Percent_Explicit,group=Weighted)) +
