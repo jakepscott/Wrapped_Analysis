@@ -229,13 +229,13 @@ names(genres) <- names(genres) %>% str_remove("Percent ")
           legend.position = "none")
 ```
 
-```{r Top Artists}
+```{r Top Artists, fig.width=8}
  # Top Artists -------------------------------------------------------------
   Artists <- Full_Wrapped %>% 
     count(Playlist,Artist) %>% 
     arrange(desc(n)) %>% 
     group_by(Playlist) %>% 
-    top_n(5, n) %>% 
+    slice_max(n, n = 10, with_ties = FALSE) %>% 
     mutate(Artist=reorder_within(x = Artist,within = Playlist,by = n))
   
   Artists$Playlist <- factor(Artists$Playlist,
@@ -279,7 +279,7 @@ names(genres) <- names(genres) %>% str_remove("Percent ")
     group_by(Playlist) %>% 
     mutate(total=sum(n),
            percent=(n/total)) %>% 
-    top_n(5, percent) %>% 
+    slice_max(percent, n = 10, with_ties = FALSE) %>%
     mutate(words=str_to_title(words)) %>% 
     mutate(words=reorder_within(x = words,within = Playlist,by = percent))
   
@@ -322,7 +322,7 @@ interesting_words_explicit <- words %>%
     group_by(Playlist) %>% 
     mutate(total=sum(n),
            percent=(n/total)*100) %>% 
-    top_n(5, percent) %>% 
+    slice_max(percent, n = 10, with_ties = FALSE) %>%
     mutate(words_clean=toTitleCase(words),
            words_clean=case_when(
              words %in% lexicon::profanity_racist~str_replace_all(string = words_clean,pattern = "A|a|e|i|o|u",replacement = "*"),
@@ -369,7 +369,7 @@ interesting_words_explicit <- words %>%
     select(Playlist,word,difference) %>%
     distinct() %>% 
     group_by(Playlist) %>% 
-    top_n(5, difference) %>%
+    slice_max(difference, n = 10, with_ties = FALSE) %>%
     mutate(word_clean=toTitleCase(word),
            word_clean=case_when(
              word %in% lexicon::profanity_racist~str_replace_all(string = word_clean,pattern = "A|a|e|i|o|u",replacement = "*"),
