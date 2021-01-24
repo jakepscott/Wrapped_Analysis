@@ -1,20 +1,7 @@
 # Which Songs Lyric Function Failed On ------------------------------------
-missed <- Lyrics %>% head(0)
-for (i in 1:nrow(Lyrics)) {
-  print(i)
-  if (!is.character(Lyrics$Lyrics[[i]])) { #If the row has lyrics (is a character) than I didn't miss it
-    missed[i,] <- Lyrics[i,]
-  }   else {
-    missed[i,] <- NA #if the row is still a double I missed it, put NA there
-  }
-}
-
-
-# Getting Some of the tough songs ------------------------------------------
-
-
 #These are the tough songs that my function couldn't get
-tough_songs <- missed %>% filter(!is.na(Song)) #Keep just the rows I missed (i.e where there are NA's for the lyrics, which I did above)
+tough_songs <- Lyrics %>% filter(full_lyrics=="1")
+
 #A handful of songs are messed up by parentheses. Let's get rid of those
 tough_songs <- tough_songs %>% mutate(song2=str_replace(Song,"\\(",replacement = ""),
                           song2=str_replace(song2,"\\)",replacement = ""))
@@ -112,6 +99,7 @@ for (i in 1:nrow(retrieved)) {
   retrieved$full_lyrics[i] <- retrieved$Lyrics[[i]] %>% paste(collapse = " ")
 }
 
+retrieved <- retrieved %>% select(-Lyrics)
 
 #Dropping from my lyrics object the rows for the songs I just got (which are NA's in the Lyrics object for the lyrics column right now)
 Got_Lyrics <- Lyrics %>% anti_join(retrieved, by="Id")

@@ -49,7 +49,7 @@ source(here("01_Obtain_Wrapped-Data/02_Obtain_Missed-Lyrics-Manually.R"))
 
 
 # Getting Lyric Features for Wrapped Songs --------------------------------
-Lyric_Features <- Lyric_Analysis_Function(Full_Lyrics) %>% select(-Lyrics)
+Lyric_Features <- Lyric_Analysis_Function(Full_Lyrics)
 Lyric_Features_To_Join <- Lyric_Features %>% select(!c(Song,Artist,Album))
 
 
