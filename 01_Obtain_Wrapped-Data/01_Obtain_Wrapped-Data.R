@@ -1,4 +1,3 @@
-tic()
 # Loading Libs ------------------------------------------------------------
 library(stringr)
 library(Rspotify)
@@ -20,33 +19,30 @@ source(here("01_Obtain_Wrapped-Data/functions/05-Compare_Playlists_Function.R"))
 tracks_full <- Tracks_Function(user = "jakerocksalot",playlists=c("Your Top Songs 2017",
                                                                   "Your Top Songs 2018",
                                                                   "Your Top Songs 2019",
-                                                                  "Your Top Songs 2020"))    
+                                                                  "Your Top Songs 2020"))   
+tracks_full <- tracks_full 
 
 # Only keeping songs for which I don't already have data from the top 200 analysis  --------
-#Whagt I am doing here is the following: I currently have a massive dataset of songs, with all their feature
+#What I am doing here is the following: I currently have a massive dataset of songs, with all their feature
 #information already downloaded. I see if there are any of the "wrapped" songs already in that massive dataset.
 #If I do, I put them in "already_have_tracks". There is no sense in me downloading all their data, just a time waste.
 #For those songs not in the massive dataset, I put them in "needed_Tracks" and download their song feature info.
 #Then at the end I bind the needed_tracks and already_have_tracks and bind them together
-Full_Top_200 <- read_rds(here("data/Full_Top_200_Feat_Lyrics_Data.rds"))
+Full_Top_200 <- read_rds(here("01_Obtain_Wrapped-Data/data/Popular_Songs_Data.rds")) %>% select(-Playlist)
 needed_tracks <- tracks_full %>% anti_join(Full_Top_200,by="Id")
 already_have_tracks <- tracks_full %>% semi_join(Full_Top_200,by="Id")
-
 
 # Getting Features of Wrapped Playlists -----------------------------------
 Features <- Features_Function(track_data = needed_tracks)
 
-
 # Getting Lyrics for Wrapped Songs ----------------------------------------
 Lyrics <- Lyric_Generation_Function(needed_tracks)
-
 
 # *Specific to Me*: Getting some songs manually ---------------------------
 source(here("01_Obtain_Wrapped-Data/02_Obtain_Missed-Lyrics-Manually.R"))
 #Note: this creates Full_Lyrics object
 #Then I can left_join() on the full data after I do the Lyrics analysis
 #saveRDS(Full_Lyrics,here("01_Obtain_Wrapped-Data/data/Full_Wrapped_Lyrics.rds"))
-
 
 # Getting Lyric Features for Wrapped Songs --------------------------------
 Lyric_Features <- Lyric_Analysis_Function(Full_Lyrics)
@@ -62,11 +58,6 @@ Full_Wrapped_Feat_Lyrics_Data <- Features %>% left_join(Lyric_Features_To_Join) 
 #have the data for the songs not in the top 200 list, I need to join those songs for which I just got data
 #to the ones I already had in the top 200. 
 
-#Load in the full data
-Full_Top_200 <- read_rds(here("data/Full_Top_200_Feat_Lyrics_Data.rds")) %>% mutate(Playlist=as.character(Playlist))
-
-#Get rid of the playlist column and just keep distinct entries
-Full_Top_200 <- Full_Top_200 %>% select(-Playlist) %>% distinct(Id,.keep_all = T)
 
 #Get the song data for the songs in thw wrapped data that are also found in the top 200 data
 already_have_tracks <- already_have_tracks %>% select(Id,Playlist) %>% left_join(Full_Top_200,by="Id")
@@ -85,4 +76,3 @@ Full_Wrapped_Feat_Lyrics_Data <- Full_Wrapped_Feat_Lyrics_Data %>% bind_rows(alr
 Wrapped_Playlist_Data <- Full_Wrapped_Feat_Lyrics_Data %>% Playlist_Comparison_Function(wrapped = T)
 #saveRDS(Wrapped_Playlist_Data,here("01_Obtain_Wrapped-Data/data/Wrapped_Playlist_Data.rds"))
 #saveRDS(Wrapped_Playlist_Data,here("data/Wrapped_Playlist_Data.rds"))
-toc()
